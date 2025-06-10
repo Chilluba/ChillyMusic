@@ -1,18 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { SearchResult } from '../../types'; // Path to types
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SearchResult } from '../../types';
 import { DefaultTheme, Spacing, Typography, BorderRadius } from '../../theme/theme';
-import Icon from '../ui/Icon'; // Path to Icon component
+import Icon from '../ui/Icon';
 
 interface MusicCardProps {
   item: SearchResult;
-  onPlay?: (item: SearchResult) => void;
+  onPlayPause: (item: SearchResult) => void; // Changed from onPlay
   onDownloadMp3?: (item: SearchResult) => void;
-  onDownloadMp4?: (item: SearchResult) => void;
+  // onDownloadMp4?: (item: SearchResult) => void; // Keep commented for now
+  isPlaying?: boolean; // Is this specific card's track currently playing?
+  isLoading?: boolean; // Is this specific card's track currently loading media info?
 }
 
-const MusicCard: React.FC<MusicCardProps> = ({ item, onPlay, onDownloadMp3, onDownloadMp4 }) => {
-  // Duration formatting (example: from seconds to MM:SS)
+const MusicCard: React.FC<MusicCardProps> = ({
+  item,
+  onPlayPause,
+  onDownloadMp3,
+  isPlaying = false,
+  isLoading = false,
+}) => {
   const formatDuration = (totalSeconds: number): string => {
     if (isNaN(totalSeconds) || totalSeconds < 0) return '0:00';
     const minutes = Math.floor(totalSeconds / 60);
@@ -20,9 +27,7 @@ const MusicCard: React.FC<MusicCardProps> = ({ item, onPlay, onDownloadMp3, onDo
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // API returns duration as 0 for now, so we'll show a placeholder or the raw value
   const displayDuration = item.duration > 0 ? formatDuration(item.duration) : (item.duration === 0 ? '' : 'N/A');
-
 
   return (
     <View style={styles.card}>
@@ -32,17 +37,24 @@ const MusicCard: React.FC<MusicCardProps> = ({ item, onPlay, onDownloadMp3, onDo
         <Text style={styles.artist} numberOfLines={1}>{item.channel} {displayDuration ? `• ${displayDuration}` : ''}</Text>
       </View>
       <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => onPlay && onPlay(item)}>
-          <Icon name='Play' size={22} color={DefaultTheme.colors.accentPrimary} />
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => onPlayPause(item)}
+          disabled={isLoading} // Disable button while this specific item is loading its media info
+        >
+          {isLoading ? (
+            <ActivityIndicator size='small' color={DefaultTheme.colors.accentPrimary} />
+          ) : (
+            <Icon name={isPlaying ? 'Pause' : 'Play'} size={22} color={DefaultTheme.colors.accentPrimary} />
+          )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={() => onDownloadMp3 && onDownloadMp3(item)}>
+        <TouchableOpacity
+          style={[styles.actionButton, isLoading && styles.disabledButton]}
+          onPress={() => onDownloadMp3 && onDownloadMp3(item)}
+          disabled={isLoading}
+        >
           <Icon name='Download' size={18} color={DefaultTheme.colors.accentSecondary} />
-          {/* <Text style={styles.actionText}>MP3</Text> */}
         </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.actionButton} onPress={() => onDownloadMp4 && onDownloadMp4(item)}>
-          <Icon name='Download' size={18} color={DefaultTheme.colors.accentSecondary} />
-           <Text style={styles.actionText}>MP4</Text>
-        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -56,13 +68,13 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     padding: Spacing.sm,
     marginBottom: Spacing.sm,
-    height: 100, // As per UI_UX Design Document (Result Card)
+    height: 100,
     borderWidth: 1,
     borderColor: DefaultTheme.colors.border,
   },
   thumbnail: {
     width: 80,
-    height: 80, // Square thumbnail inside the card
+    height: 80,
     borderRadius: BorderRadius.sm,
     marginRight: Spacing.sm,
   },
@@ -84,7 +96,7 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.primary,
   },
   actionsContainer: {
-    flexDirection: 'column', // As per UI/UX Doc, actions can be stacked or side-by-side for more space
+    flexDirection: 'column',
     justifyContent: 'space-around',
     alignItems: 'center',
     paddingLeft: Spacing.sm,
@@ -92,12 +104,13 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: Spacing.xs,
-    // backgroundColor: DefaultTheme.colors.backgroundTertiary, // Example if buttons need bg
-    // borderRadius: BorderRadius.sm,
+    minWidth: 30, // Ensure touchable area
+    minHeight: 30, // Ensure touchable area
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  actionText: {
-    color: DefaultTheme.colors.accentSecondary,
-    fontSize: Typography.fontSize.caption,
+  disabledButton: {
+    opacity: 0.5,
   }
 });
 

@@ -1,4 +1,4 @@
-import { SearchResult } from '../types'; // Assuming a types definition file will be created or shared
+import { SearchResult, MediaInfo } from '../types'; // Ensure MediaInfo is imported
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -20,6 +20,20 @@ export const fetchSearchResults = async (query: string, limit: number = 10): Pro
     return await response.json() as SearchResponse;
   } catch (error: any) {
     console.error('Error fetching search results:', error);
+    throw error;
+  }
+};
+
+export const fetchMediaInfo = async (videoId: string): Promise<MediaInfo> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/media/${videoId}/info`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Network response was not ok' }));
+      throw new Error(errorData.message || 'Failed to fetch media info');
+    }
+    return await response.json() as MediaInfo;
+  } catch (error: any) {
+    console.error(`Error fetching media info for ${videoId}:`, error);
     throw error;
   }
 };

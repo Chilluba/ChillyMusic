@@ -1,8 +1,8 @@
-import { SearchResult } from '../types'; // Assuming a types definition file will be created
+import { SearchResult } from '../types';
+// Assuming MediaInfo and MediaFormatDetails types will be added to ../types
+import { MediaInfo } from '../types'; // Add MediaInfo to types
 
-// Define the base URL for the API.
-// In a real app, this would come from an environment variable.
-const API_BASE_URL = 'http://localhost:3001/api'; // As per README and .env examples
+const API_BASE_URL = 'http://localhost:3001/api';
 
 interface SearchResponse {
   results: SearchResult[];
@@ -10,6 +10,7 @@ interface SearchResponse {
 }
 
 export const fetchSearchResults = async (query: string, limit: number = 10): Promise<SearchResponse> => {
+  // ... existing implementation ...
   if (!query.trim()) {
     return { results: [], total: 0 };
   }
@@ -22,6 +23,20 @@ export const fetchSearchResults = async (query: string, limit: number = 10): Pro
     return await response.json() as SearchResponse;
   } catch (error: any) {
     console.error('Error fetching search results:', error);
-    throw error; // Re-throw to be caught by the component
+    throw error;
+  }
+};
+
+export const fetchMediaInfo = async (videoId: string): Promise<MediaInfo> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/media/${videoId}/info`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Network response was not ok' }));
+      throw new Error(errorData.message || 'Failed to fetch media info');
+    }
+    return await response.json() as MediaInfo;
+  } catch (error: any) {
+    console.error(`Error fetching media info for ${videoId}:`, error);
+    throw error;
   }
 };

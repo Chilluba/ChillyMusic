@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { DefaultTheme, Spacing } from '../../theme/theme'; // Adjusted path
+import { DefaultTheme, Spacing } from '../theme/theme'; // Ensure Spacing is imported if used
 
 interface IconProps {
   name: string;
@@ -9,7 +9,6 @@ interface IconProps {
   onPress?: () => void;
 }
 
-// Simple placeholder icons
 const iconMap: Record<string, string> = {
   List: '☰',
   Gear: '⚙️',
@@ -18,15 +17,15 @@ const iconMap: Record<string, string> = {
   Clock: '🕒',
   Fire: '🔥',
   Play: '▶️',
+  Pause: '❚❚', // Added Pause Icon
   Download: '⬇️',
   ArrowLeft: '←',
   DotsThree: '⋮',
-  // Add more as needed
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {
   const iconChar = iconMap[name] || '?';
-  const iconStyle = { fontSize: size, color };
+  const iconStyle = { fontSize: size, color, fontFamily: DefaultTheme.typography.fontFamily.primary }; // Added fontFamily
 
   if (onPress) {
     return (
@@ -40,7 +39,7 @@ const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.color
 
 const styles = StyleSheet.create({
   touchable: {
-    padding: Spacing.sm / 2, // Make touch target slightly larger
+    // padding: Spacing.sm / 2, // Example, if Spacing is needed
   },
 });
 
