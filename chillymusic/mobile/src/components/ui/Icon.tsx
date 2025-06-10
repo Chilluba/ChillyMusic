@@ -17,15 +17,16 @@ const iconMap: Record<string, string> = {
   Clock: '🕒',
   Fire: '🔥',
   Play: '▶️',
-  Pause: '❚❚', // Added Pause Icon
+  Pause: '❚❚',
   Download: '⬇️',
   ArrowLeft: '←',
   DotsThree: '⋮',
+  Close: '✕', // Added Close icon
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {
   const iconChar = iconMap[name] || '?';
-  const iconStyle = { fontSize: size, color, fontFamily: DefaultTheme.typography.fontFamily.primary }; // Added fontFamily
+  const iconStyle = { fontSize: size, color, fontFamily: DefaultTheme.typography.fontFamily.primary };
 
   if (onPress) {
     return (

@@ -40,3 +40,34 @@ export const fetchMediaInfo = async (videoId: string): Promise<MediaInfo> => {
     throw error;
   }
 };
+
+export interface DownloadUrlResponse { // Ensure this is defined or imported if not already
+  downloadUrl: string;
+  fileName?: string; // Optional filename from backend
+}
+
+interface DownloadRequestPayload {
+  videoId: string;
+  format: 'mp3' | 'mp4';
+  quality: string;
+}
+
+export const fetchDownloadLink = async (payload: DownloadRequestPayload): Promise<DownloadUrlResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/media/download`, { // Corrected path from PRD /api/download, assuming media prefix
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Network response was not ok during download link fetch' }));
+      throw new Error(errorData.message || 'Failed to fetch download link');
+    }
+    return await response.json() as DownloadUrlResponse;
+  } catch (error: any) {
+    console.error(`Error fetching download link for ${payload.videoId}:`, error);
+    throw error;
+  }
+};

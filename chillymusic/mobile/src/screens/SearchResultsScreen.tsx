@@ -1,16 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
-import type { RouteProp } from '@react-navigation/native';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert, PermissionsAndroid, Platform } from 'react-native';
 // @ts-ignore
 import Video, { OnLoadData, OnProgressData, OnErrorData } from 'react-native-video';
+// @ts-ignore
+import RNFS from 'react-native-fs'; // Import react-native-fs
 
 import { RootStackParamList } from '../navigation/types';
-import { SearchResult, MediaInfo, MediaFormatDetails } from '../types';
+import { SearchResult, MediaInfo } from '../types'; // MediaFormatDetails removed as not directly used in this file's state/props
 import MusicCard from '../components/cards/MusicCard';
 import { DefaultTheme, Spacing, Typography } from '../theme/theme';
-import { fetchMediaInfo } from '../services/apiService';
+import { fetchMediaInfo, fetchDownloadLink, DownloadUrlResponse } from '../services/apiService'; // Added fetchDownloadLink and DownloadUrlResponse
 import Icon from '../components/ui/Icon';
+import DownloadOptionsModal, { DownloadOption } from '../components/modals/DownloadOptionsModal';
 
 type SearchResultsScreenRouteProp = RouteProp<RootStackParamList, 'SearchResults'>;
 type SearchResultsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SearchResults'>;
@@ -22,14 +23,12 @@ interface Props {
 
 interface PlaybackProgress {
   currentTime: number;
-  seekableDuration: number; // Total duration of the playable media
+  seekableDuration: number;
 }
 
 const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
   const { results, query } = route.params;
-  const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null);
-  // mediaInfo is not directly used in UI for now, but good to have if expanding
-  // const [mediaInfo, setMediaInfo] = useState<MediaInfo | null>(null);
+  const [selectedTrackForPlayback, setSelectedTrackForPlayback] = useState<SearchResult | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingMediaForTrackId, setIsLoadingMediaForTrackId] = useState<string | null>(null);
@@ -38,29 +37,35 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const videoPlayerRef = useRef<Video>(null);
 
+  const [isDownloadModalVisible, setIsDownloadModalVisible] = useState(false);
+  const [trackForDownload, setTrackForDownload] = useState<SearchResult | null>(null);
+  const [mediaInfoForDownload, setMediaInfoForDownload] = useState<MediaInfo | null>(null);
+  const [isLoadingDownloadOptions, setIsLoadingDownloadOptions] = useState(false);
+  const [activeDownloads, setActiveDownloads] = useState<{[key: string]: {progress: number, jobId?: number, error?: string, path?: string}}>({});
+
   const handlePlayPause = async (track: SearchResult) => {
     setPlaybackError(null);
-    if (selectedTrack?.videoId === track.videoId) {
+    if (selectedTrackForPlayback?.videoId === track.videoId) {
       setIsPlaying(!isPlaying);
     } else {
-      setSelectedTrack(track);
+      setSelectedTrackForPlayback(track);
       setIsPlaying(false);
-      setIsLoadingMediaForTrackId(track.videoId); // Indicate loading for this specific track
+      setIsLoadingMediaForTrackId(track.videoId);
       setStreamUrl(null);
-      setPlaybackProgress({ currentTime: 0, seekableDuration: 0 }); // Reset progress
+      setPlaybackProgress({ currentTime: 0, seekableDuration: 0 });
       try {
         const info = await fetchMediaInfo(track.videoId);
-        // setMediaInfo(info);
+        if (!mediaInfoForDownload || mediaInfoForDownload.videoId !== info.videoId) {
+            setMediaInfoForDownload(info);
+        }
         const audioFormat = info.formats.find(f => f.ext === 'm4a' || f.ext === 'mp3' || f.audioCodec);
         if (audioFormat?.url) {
           setStreamUrl(audioFormat.url);
           setIsPlaying(true);
         } else {
-          Alert.alert('Playback Error', 'No suitable audio stream found for this track.');
           setPlaybackError('No suitable audio stream found.');
         }
       } catch (error: any) {
-        Alert.alert('Playback Error', error.message || 'Failed to fetch media details.');
         setPlaybackError(error.message || 'Failed to fetch media details.');
       } finally {
         setIsLoadingMediaForTrackId(null);
@@ -68,33 +73,139 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  const onVideoLoad = (data: OnLoadData) => {
+  const openDownloadOptions = async (track: SearchResult) => {
+    setTrackForDownload(track);
+    setIsDownloadModalVisible(true);
+    if (mediaInfoForDownload?.videoId === track.videoId) {
+      setIsLoadingDownloadOptions(false);
+      return;
+    }
+    if (selectedTrackForPlayback?.videoId === track.videoId && mediaInfoForDownload?.videoId === track.videoId) {
+         setIsLoadingDownloadOptions(false);
+         return;
+    }
+    setIsLoadingDownloadOptions(true);
+    try {
+      const info = await fetchMediaInfo(track.videoId);
+      setMediaInfoForDownload(info);
+    } catch (error: any) {
+      Alert.alert('Error', 'Could not fetch download options.');
+      setMediaInfoForDownload(null);
+    } finally {
+      setIsLoadingDownloadOptions(false);
+    }
+  };
+
+  const requestStoragePermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'ChillyMusic Storage Permission',
+            message: 'ChillyMusic needs access to your storage to download music.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleSelectDownloadOption = async (option: DownloadOption) => {
+    setIsDownloadModalVisible(false);
+    if (!trackForDownload) return;
+
+    const hasPermission = await requestStoragePermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Storage permission is required to download files.');
+      return;
+    }
+
+    const currentTrack = trackForDownload;
+    const downloadKey = `${currentTrack.videoId}_${option.format}_${option.quality}`;
+    setActiveDownloads(prev => ({ ...prev, [downloadKey]: { progress: 0, error: undefined, path: undefined } }));
+
+    try {
+      Alert.alert('Download Starting', `Preparing to download: ${currentTrack.title} (${option.label})`);
+      const downloadPayload = {
+        videoId: currentTrack.videoId,
+        format: option.format,
+        quality: option.quality,
+      };
+      const { downloadUrl, fileName: suggestedFileName } = await fetchDownloadLink(downloadPayload);
+
+      const safeTitle = currentTrack.title.replace(/[^a-zA-Z0-9\s-_]/g, '').replace(/\s+/g, '_');
+      const extension = option.format === 'mp3' ? 'mp3' : 'mp4';
+      const fileName = suggestedFileName || `${safeTitle}_${option.quality}.${extension}`;
+
+      const destPath = `${Platform.OS === 'ios' ? RNFS.DocumentDirectoryPath : RNFS.DownloadDirectoryPath}/${fileName}`;
+
+      console.log(`Starting download for ${currentTrack.title} to ${destPath} from ${downloadUrl}`);
+
+      const download = RNFS.downloadFile({
+        fromUrl: downloadUrl,
+        toFile: destPath,
+        background: true,
+        progressDivider: 10,
+        begin: (res) => {
+          setActiveDownloads(prev => ({
+            ...prev,
+            [downloadKey]: { ...prev[downloadKey], jobId: res.jobId, progress: 0 }
+          }));
+        },
+        progress: (res) => {
+          const progressPercent = (res.bytesWritten / res.contentLength) * 100;
+          setActiveDownloads(prev => ({
+            ...prev,
+            [downloadKey]: { ...prev[downloadKey], progress: progressPercent }
+          }));
+        },
+      });
+
+      setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], jobId: download.jobId } }));
+      const result = await download.promise;
+
+      if (result.statusCode === 200) {
+        Alert.alert('Download Complete', `${currentTrack.title} downloaded successfully to ${destPath}!`);
+        setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], progress: 100, path: destPath } }));
+      } else {
+        throw new Error(`Download failed: Status ${result.statusCode}`);
+      }
+
+    } catch (error: any) {
+      Alert.alert('Download Error', `Could not download ${currentTrack.title}: ${error.message}`);
+      setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], error: error.message, progress: -1 } }));
+    }
+    // Not clearing trackForDownload here to allow status to be shown on card
+  };
+
+  const onVideoLoad = (data: OnLoadData) => { /* ... from previous step ... */
     console.log('Video loaded, duration:', data.duration);
     setPlaybackProgress(prev => ({ ...prev, seekableDuration: data.duration }));
   };
-
-  const onVideoProgress = (data: OnProgressData) => {
-    setPlaybackProgress({ currentTime: data.currentTime, seekableDuration: data.seekableDuration || playbackProgress.seekableDuration });
+  const onVideoProgress = (data: OnProgressData) => { /* ... from previous step ... */
+     setPlaybackProgress({ currentTime: data.currentTime, seekableDuration: data.seekableDuration || playbackProgress.seekableDuration });
   };
-
-  const onVideoError = (error: OnErrorData) => {
+  const onVideoError = (error: OnErrorData) => { /* ... from previous step ... */
     console.error('Video playback error:', error);
     const errorMessage = error.error?.localizedFailureReason || error.error?.localizedDescription || 'Unknown playback error';
     Alert.alert('Playback Error', errorMessage);
     setPlaybackError(errorMessage);
     setIsPlaying(false);
   };
-
-  const onVideoEnd = () => {
+  const onVideoEnd = () => { /* ... from previous step ... */
     setIsPlaying(false);
-    // Optionally: play next track, clear selection, etc.
-    // For now, just stop.
-    // setSelectedTrack(null);
-    // setStreamUrl(null);
     setPlaybackProgress({ currentTime: 0, seekableDuration: 0 });
   };
 
-  if (!results) {
+  if (!results) { /* ... as in previous step ... */
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size='large' color={DefaultTheme.colors.accentPrimary} />
@@ -102,7 +213,7 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
       </View>
     );
   }
-  if (results.length === 0) {
+  if (results.length === 0) { /* ... as in previous step ... */
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.emptyText}>No results found for "{query}".</Text>
@@ -114,16 +225,31 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
   }
 
   const renderMusicCard = ({ item }: { item: SearchResult }) => {
-    const isCurrentlyPlayingItem = selectedTrack?.videoId === item.videoId && isPlaying;
-    const isLoadingItem = isLoadingMediaForTrackId === item.videoId;
+    const isCurrentlyPlayingItem = selectedTrackForPlayback?.videoId === item.videoId && isPlaying;
+    const isLoadingItemPlayback = isLoadingMediaForTrackId === item.videoId;
+    // Attempt to find any download status for this item based on videoId
+    const downloadKeyPrefix = `${item.videoId}_`;
+    const currentDownloadStatus = Object.entries(activeDownloads).find(([key]) => key.startsWith(downloadKeyPrefix))?.[1];
 
     return (
-      <MusicCard
-        item={item}
-        onPlayPause={handlePlayPause} // Pass unified play/pause handler
-        isPlaying={isCurrentlyPlayingItem}
-        isLoading={isLoadingItem}
-      />
+      <View>
+        <MusicCard
+          item={item}
+          onPlayPause={handlePlayPause}
+          isPlaying={isCurrentlyPlayingItem}
+          isLoading={isLoadingItemPlayback}
+          onDownloadMp3={() => openDownloadOptions(item)}
+        />
+        {currentDownloadStatus && (
+          <View style={styles.downloadStatusContainer}>
+            {currentDownloadStatus.error && <Text style={styles.errorText}>Download Error</Text>}
+            {!currentDownloadStatus.error && currentDownloadStatus.progress < 100 &&
+              <Text style={styles.downloadProgressText}>Downloading: {currentDownloadStatus.progress.toFixed(0)}%</Text>}
+            {!currentDownloadStatus.error && currentDownloadStatus.progress === 100 &&
+              <Text style={styles.downloadCompleteText}>Downloaded</Text>}
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -140,7 +266,7 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
-      {streamUrl && selectedTrack && (
+      {streamUrl && selectedTrackForPlayback && (
         <Video
           ref={videoPlayerRef}
           source={{ uri: streamUrl }}
@@ -153,50 +279,57 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
           onProgress={onVideoProgress}
           onEnd={onVideoEnd}
           style={styles.videoPlayer}
-          progressUpdateInterval={1000} // Update progress every second
+          progressUpdateInterval={1000}
         />
       )}
-      {selectedTrack && (
-        <View style={styles.miniPlayer}>
-          <View style={styles.miniPlayerInfoAndButton}>
+
+      {selectedTrackForPlayback && ( <View style={styles.miniPlayer}>{/* ... same as previous step ... */
+        <View style={styles.miniPlayerInfoAndButton}>
             <View style={styles.miniPlayerInfo}>
-              <Text style={styles.miniPlayerText} numberOfLines={1}>{selectedTrack.title}</Text>
-              <Text style={styles.miniPlayerArtist} numberOfLines={1}>{selectedTrack.channel}</Text>
-              {playbackError && isLoadingMediaForTrackId !== selectedTrack.videoId && ( // Show error only if not currently loading this track
+                <Text style={styles.miniPlayerText} numberOfLines={1}>{selectedTrackForPlayback.title}</Text>
+                <Text style={styles.miniPlayerArtist} numberOfLines={1}>{selectedTrackForPlayback.channel}</Text>
+                {playbackError && isLoadingMediaForTrackId !== selectedTrackForPlayback.videoId && (
                 <Text style={styles.miniPlayerError} numberOfLines={1}>Error: {playbackError}</Text>
-              )}
+                )}
             </View>
-            <TouchableOpacity onPress={() => handlePlayPause(selectedTrack)} style={styles.miniPlayerButton}>
-              {isLoadingMediaForTrackId === selectedTrack.videoId ? (
+            <TouchableOpacity onPress={() => handlePlayPause(selectedTrackForPlayback)} style={styles.miniPlayerButton}>
+                {isLoadingMediaForTrackId === selectedTrackForPlayback.videoId ? (
                 <ActivityIndicator size='small' color={DefaultTheme.colors.textPrimary} />
-              ) : (
+                ) : (
                 <Icon name={isPlaying ? 'Pause' : 'Play'} size={28} color={DefaultTheme.colors.textPrimary} />
-              )}
+                )}
             </TouchableOpacity>
-          </View>
-          {/* Progress Bar */}
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
-          </View>
         </View>
-      )}
+        <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
+        </View>
+      }</View>)}
+
+      <DownloadOptionsModal
+        visible={isDownloadModalVisible}
+        mediaInfo={mediaInfoForDownload}
+        isLoading={isLoadingDownloadOptions}
+        onClose={() => { setIsDownloadModalVisible(false); /* Don't clear trackForDownload here */ }}
+        onSelectOption={handleSelectDownloadOption}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  // ... All existing styles from previous step ...
   container: { flex: 1, backgroundColor: DefaultTheme.colors.backgroundPrimary },
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.md },
-  listContent: { padding: Spacing.md, paddingBottom: 80 }, // Add paddingBottom for mini player
+  listContent: { padding: Spacing.md, paddingBottom: 80 },
   emptyText: { fontSize: Typography.fontSize.bodyLarge, color: DefaultTheme.colors.textSecondary, textAlign: 'center', marginBottom: Spacing.md },
-  goBackButton: { // Added from previous version of this screen
+  goBackButton: {
     backgroundColor: DefaultTheme.colors.accentPrimary,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.sm,
     marginTop: Spacing.md,
   },
-  goBackButtonText: { // Added from previous version of this screen
+  goBackButtonText: {
     color: DefaultTheme.colors.white,
     fontSize: Typography.fontSize.bodyLarge,
     fontWeight: Typography.fontWeight.medium,
@@ -252,6 +385,29 @@ const styles = StyleSheet.create({
     backgroundColor: DefaultTheme.colors.accentPrimary,
     borderRadius: 2,
   },
+  // Added styles for download status
+  downloadStatusContainer: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    backgroundColor: DefaultTheme.colors.backgroundTertiary, // Subtle background for status
+    marginTop: -Spacing.sm, // Overlap slightly with card bottom margin
+    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+  },
+  downloadProgressText: {
+    fontSize: Typography.fontSize.caption,
+    color: DefaultTheme.colors.accentSecondary,
+  },
+  downloadCompleteText: {
+    fontSize: Typography.fontSize.caption,
+    color: DefaultTheme.colors.accentPrimary,
+    fontWeight: 'bold',
+  },
+  errorText: { // General error text, can be used by download status too
+    fontSize: Typography.fontSize.caption,
+    color: DefaultTheme.colors.error,
+    textAlign: 'center',
+  }
 });
 
 export default SearchResultsScreen;

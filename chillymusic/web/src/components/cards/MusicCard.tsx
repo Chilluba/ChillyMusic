@@ -4,17 +4,17 @@ import Icon from '../ui/Icon';
 
 interface MusicCardProps {
   item: SearchResult;
-  onPlayPause: (item: SearchResult) => void; // Changed from onPlay
-  onDownloadMp3?: (item: SearchResult) => void;
+  onPlayPause: (item: SearchResult) => void;
+  onOpenDownloadOptions?: (item: SearchResult, anchorEl: HTMLElement) => void; // Changed prop name and signature
   // onDownloadMp4?: (item: SearchResult) => void;
-  isPlaying?: boolean; // Is this specific card's track currently playing?
-  isLoading?: boolean; // Is this specific card's track currently loading media info?
+  isPlaying?: boolean;
+  isLoading?: boolean;
 }
 
 const MusicCard: React.FC<MusicCardProps> = ({
   item,
   onPlayPause,
-  onDownloadMp3,
+  onOpenDownloadOptions, // Use new prop
   isPlaying = false,
   isLoading = false,
 }) => {
@@ -59,8 +59,8 @@ const MusicCard: React.FC<MusicCardProps> = ({
           )}
         </button>
         <button
-          onClick={() => onDownloadMp3 && onDownloadMp3(item)}
-          aria-label={`Download ${item.title} as MP3`}
+          onClick={(event) => onOpenDownloadOptions && onOpenDownloadOptions(item, event.currentTarget)} // Pass event.currentTarget
+          aria-label={`Download options for ${item.title}`} // Updated aria-label
           className='p-1.5 sm:p-2 rounded-sm text-accent-secondary hover:bg-accent-secondary/10 disabled:opacity-50 disabled:cursor-not-allowed'
           disabled={isLoading}
         >
