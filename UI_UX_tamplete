@@ -1,0 +1,762 @@
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Spline+Sans%3Awght%40400%3B500%3B700"
+    />
+
+    <title>Stitch Design</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body>
+    <div
+      class="relative flex size-full min-h-screen flex-col bg-[#111714] dark justify-between group/design-root overflow-x-hidden"
+      style='font-family: "Spline Sans", "Noto Sans", sans-serif;'
+    >
+      <div>
+        <div class="flex items-center bg-[#111714] p-4 pb-2 justify-between">
+          <div class="text-white flex size-12 shrink-0 items-center" data-icon="List" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+              <path
+                d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"
+              ></path>
+            </svg>
+          </div>
+          <div class="flex w-12 items-center justify-end">
+            <button
+              class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 bg-transparent text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0"
+            >
+              <div class="text-white" data-icon="Gear" data-size="24px" data-weight="regular">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                  <path
+                    d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+        <div class="px-4 py-3">
+          <label class="flex flex-col min-w-40 h-12 w-full">
+            <div class="flex w-full flex-1 items-stretch rounded-xl h-full">
+              <div
+                class="text-[#9eb7a8] flex border-none bg-[#29382f] items-center justify-center pl-4 rounded-l-xl border-r-0"
+                data-icon="MagnifyingGlass"
+                data-size="24px"
+                data-weight="regular"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                </svg>
+              </div>
+              <input
+                placeholder="Search for songs, artists, albums"
+                class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-white focus:outline-0 focus:ring-0 border-none bg-[#29382f] focus:border-none h-full placeholder:text-[#9eb7a8] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
+                value=""
+              />
+            </div>
+          </label>
+        </div>
+        <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Recent Searches</h2>
+        <div class="flex gap-3 p-3 flex-wrap pr-4">
+          <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#29382f] pl-4 pr-4">
+            <p class="text-white text-sm font-medium leading-normal">Chillhop</p>
+          </div>
+          <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#29382f] pl-4 pr-4">
+            <p class="text-white text-sm font-medium leading-normal">Indie Pop</p>
+          </div>
+          <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#29382f] pl-4 pr-4">
+            <p class="text-white text-sm font-medium leading-normal">Electronic</p>
+          </div>
+          <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#29382f] pl-4 pr-4">
+            <p class="text-white text-sm font-medium leading-normal">Classical</p>
+          </div>
+        </div>
+        <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Trending Now</h2>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2">
+          <div
+            class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuANnFwjaLSq8TdXoC1Ttjj2N0YzXK0tDvsZ1wH2Ft0vC-Tj6dC0nwVCpn_rAPHoQwmvSAwArNPMeQtqL7OMhIV8WiVynFeinuz1KCsW99A8p5_J3787Y3SN6iieZ0Zgjz3kw6L4ml8Nltk3WvtauLX4whviBLuHESSp9Fm4mSv89aTU1OX5U4_ARiO1_6Mb759iutFlNEW_uuKjC0n_fyvAxckrxH7flbj0wr-9MTIgNvSJ3EMdvmbvt4dcvcq3Zx3jsa4VX7dknQA2");'
+          ></div>
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Song 1</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Artist 1</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2">
+          <div
+            class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA7drE8_fsDdfPgtKEE1GgD5AbeJf5KHb_2aOiCfTZC7o1V0AoC2IsiRZrpfKWJjm5tJCfzMnUP45s449u0WxxqmybY_zxcMbDOAJCswT0Xt59UJJhFHwLlA4YW4EcqYSORIwQy51FshRIX21IemHGwtX_eu1mNH_4BL1di3OyzXYL4RR4rHq0eU2A7geMg2Ax9wtnCd7KjAxXKKmarVelgLgdgeJf44o7ygJYDpR8VjV_oYo4Vuhxz3asUoaY_yxC3RMSq9wWAzFuJ");'
+          ></div>
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Song 2</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Artist 2</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2">
+          <div
+            class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBAX_xELlwmb_qQNJ9zY3VhFkKuAl7j1ypNOHoUkjSjAibDNZot8f2XH8MRZcvfRgINahI9Pf6L6VK2EHA8uAyQwbgKcq570Ph0RCT2JENkm-8F7XYpFIFHGX9EN3uUEv9iC1oVheNXIrDft2yacaAMH4b_dtp0eJyU6Aex32uFeYkpn7TqqQpG9cmHuyDB0IKsioz62SghFwd8S_89S0Ph1Np-t2-PMyyy1s04ZWZlPwx2JD-XrZnitloPE7DFEjeWWuOIw6Jh1gro");'
+          ></div>
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Song 3</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Artist 3</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2">
+          <div
+            class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBSw7zuq3_ptyJxYE4yOQZROuC1Xu3Pq9tp_RVs2u8EYIQBdf8ap49kfvvcNg4-4TWiDoe0qdrIb_LRriV_XbgJc_1mm6P6DRAqyq89joWFkKw5nbXEfqaxzOJcm-we-QJhKAOgWbNxuXvBiMQQNCeU20oAfk5OLrCiF3ef2cFYBzLWeg9DiNl6vja_7zO2bqIBN-tFsGKXmt7EaQ7v9JD0JBw7ZPHwViB8q12mQxcxo4MXY7_iJ_806KxI5hCMjQMSbdKVPh94GAMk");'
+          ></div>
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Song 4</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Artist 4</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex gap-2 border-t border-[#29382f] bg-[#1c2620] px-4 pb-3 pt-2">
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#9eb7a8]" href="#">
+            <div class="text-[#9eb7a8] flex h-8 items-center justify-center" data-icon="House" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M218.83,103.77l-80-75.48a1.14,1.14,0,0,1-.11-.11,16,16,0,0,0-21.53,0l-.11.11L37.17,103.77A16,16,0,0,0,32,115.55V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V160h32v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V115.55A16,16,0,0,0,218.83,103.77ZM208,208H160V160a16,16,0,0,0-16-16H112a16,16,0,0,0-16,16v48H48V115.55l.11-.1L128,40l79.9,75.43.11.1Z"
+                ></path>
+              </svg>
+            </div>
+            <p class="text-[#9eb7a8] text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+          </a>
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-white" href="#">
+            <div class="text-white flex h-8 items-center justify-center" data-icon="MagnifyingGlass" data-size="24px" data-weight="fill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M168,112a56,56,0,1,1-56-56A56,56,0,0,1,168,112Zm61.66,117.66a8,8,0,0,1-11.32,0l-50.06-50.07a88,88,0,1,1,11.32-11.31l50.06,50.06A8,8,0,0,1,229.66,229.66ZM112,184a72,72,0,1,0-72-72A72.08,72.08,0,0,0,112,184Z"
+                ></path>
+              </svg>
+            </div>
+            <p class="text-white text-xs font-medium leading-normal tracking-[0.015em]">Search</p>
+          </a>
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#9eb7a8]" href="#">
+            <div class="text-[#9eb7a8] flex h-8 items-center justify-center" data-icon="Bookmark" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,16V161.57l-51.77-32.35a8,8,0,0,0-8.48,0L72,161.56V48ZM132.23,177.22a8,8,0,0,0-8.48,0L72,209.57V180.43l56-35,56,35v29.14Z"
+                ></path>
+              </svg>
+            </div>
+            <p class="text-[#9eb7a8] text-xs font-medium leading-normal tracking-[0.015em]">Library</p>
+          </a>
+        </div>
+        <div class="h-5 bg-[#1c2620]"></div>
+      </div>
+    </div>
+  </body>
+</html>
+
+
+
+
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Spline+Sans%3Awght%40400%3B500%3B700"
+    />
+
+    <title>Stitch Design</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body>
+    <div
+      class="relative flex size-full min-h-screen flex-col bg-[#111714] dark justify-between group/design-root overflow-x-hidden"
+      style='font-family: "Spline Sans", "Noto Sans", sans-serif;'
+    >
+      <div>
+        <div class="flex items-center bg-[#111714] p-4 pb-2 justify-between">
+          <div class="text-white flex size-12 shrink-0 items-center" data-icon="ArrowLeft" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+              <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+            </svg>
+          </div>
+          <div class="flex w-12 items-center justify-end">
+            <button
+              class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 bg-transparent text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0"
+            >
+              <div class="text-white" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+        <h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Search results for "Taylor Swift"</h3>
+        <p class="text-[#9eb7a8] text-sm font-normal leading-normal pb-3 pt-1 px-4">About 1,234,567 results (0.23 seconds)</p>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDwqQpXQFdUQ5_dU_pSFwweV704sQwQS8pcvNaiWtJt0h4oBI_GbU97K9OFs7r1826tbvfLg-4czebJqZRF0toWzQh8Qp7Hm6aAuRPBh1-2sYmabW_04x3vevpTL3QxOq5W4rdAlF9-XFUED5h--RisyRoH4vyW8etDhgnQdoQx7TP8k-ioztSV0t4lyuWZwkAQ1AkY4q9j5QVDjY0VYa_LLsn2O2sazAv2JnlHdLnRliGorPCKDzx_FiA4a10gPgUjvnRif57qYIcp");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Cruel Summer</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDQGHOHCvyXPp4s2mZWHwYqcX2r2nCPi0uYE2D9F56kHc7_Z1vDIknn8SmtzAdT8umZgWlw1HJFNrL-XVDXO-4NV81-K2ARrg67udmdj9jKglFUcmBaJyVaCjg6VD1SF0W8p_i1tyGBL8tnWkRvJtQwAxyjMZfI6EECsKGL_qVwtWI1LPHJ5K2BNkOq_Vby4Ggeh7OoVMRCPONTDoWy-ATyeWOfuKc99J0y3gHSGCQKLW2bzwUGhZDFhCCaBGjO74s_dqVaDP0H22Vi");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Lover</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA5EiaTnIefXQcIdM8YOfv1DaKvrr86QnTKYZVRn5xP_sHPHVXrN-2now1jyxY2f7PpS8ZdHjLbH9xE4iaiNsdcuBWBEsGb2eqgL2kmMtCRZBd4r4-6n4dv4aBUQfdmzAq0K8y190D_30INPho7dDs9EMzMqJI4DSfEYvMk_k9t8CNwiJFYSdWpgVNZ-6RHoROATDKl330S0GKo8ysBUc7JGfPhW-lU-cjwEeAaa1YREwf20I-eLYOwaueGC8HaK6T9ykqrLzHDPDaU");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">You Belong With Me</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD3JQ7ZkhdxUgaldzVUkyz265XTJHxsjEyjN4HV8_NKGzCDXn6OOGzi0pTtNvvk3j8oCWIsvEagjQx-tfUf73Jnq7hf7yATPlugjxMNwTUHEJA13dkCDwdMOkxhKxC5cj1hqd_dfBLsxfApso2579HwklTCRH7ptvGPvdUG70Uy_k2gJE-RsXMkDlcKNcqWu6OLJ0ei5HVqztumRjU7Mm0PY_SSvgyt99KxLkPUHZMYCAR9bC6dZp1H9_Ek6xs12WliNCI8Cffkx_Xd");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Shake It Off</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAD7cAJ3ZtNLyHJKI254vl6qpBOeHu5tQdHNABXFVGROVqxRHBqLngQ9IRFXGl4WJ5NTWWYm0T7XuqIBWPdq-ZUvYVXHYTznCkcKJVk61faber2rcPO_C8V8Qd2Ddjmwgbj6LemCqOESnSxMTbOCMke7a7VB-4gXI_7QZDj8CDBB1mJ2avTRBBohHWBKk9RC61Z-fixUpw6nJkbsdclKtMVdnxL18DviW962GNX4r0K7tw0iL_h5EKgEJ7oQtM49s6BF1njgVrwWitJ");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Blank Space</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCtm3tyS4iICI4LjopbXbPZDVxO7WTI_PbHPDYJ6LCTHdPFy7mSEUnDQCgsCm2xCEYRmB0DkVohoXS7YUk_S3I2XV8MdVSas7DiNhwQ9lx2eF2esgj3eukkw-bK31jIbghlkqyE9o2ofXqqcOn-St0stFXY2HxA0EJ_zWHS4uWq4Nol2nqSxJZp3wXXaXYbl4O6qDQ9pQh3wKg4cvAzjveS1F7lTXx7hrJkYgI6yIZ4g9YAZhcN-mG_jB-jeof0Nfk7E6DhQBvfiHaY");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Style</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB1Uk5rlmxbYeRghbGCUT-BRx29NLlzmziyaqz7OcqwQBedgzZzSihcw_OkqvzrFqHeJaEy330l0t0h0er-BQHigqmj5KMQe3JTpHZcarPl0vfNqaRJhj7usSZRTqlTbvNmhSDEsdnkWwaFanXUoWGmFZC-rMrHzFiHjzOHgt--TPT3G8wvkXGxiTHjpOh7PgGOXEhJymyJjce51PD2csNdEJUiHe9toZeGdR6H6Trv4Jw96KFquQW6OHTbGVAr6Bygf9jlVf1lio9d");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Bad Blood</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDi0C_qoxbFYi7XaFgPaUP5sQIDDf8hqoXzn7HIJthY0isdmLc-e6wHR2yj-7lGi0WRvDjdp-kMEvZglafQ1W51IvG5ElHF-ZJV3bkGtAj3ovPd0Z6WLY2oN3Zbz0dZejC9uQIy9DsDHk0rphhOmXuNGU91jvoVvTTmU5GMxzhUtmEvYAWhJ3SFC2YIcasA0MMMr1HjNrNL1TzcoFyM7IjQJ3Z6dyjLIjYzN-AwcIQ1x0xvQNP_WkDOMF_ZIk7qgJNrnJfCxH2QcP8S");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Wildest Dreams</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCkvRZOFau_fVIHVHYPHBLG6KcMJ4qKjWYNjTgWFD5oX3ReE7Tm4xMzNPovRCJGLTIcOAgerRDN-cnpkhWfoC8G2h9oswk4IhfgS41e4AF6L5Z1moDlCJn3WyWjW2GCElogzT3rROBnUSW5jJahKc7cMglafCBZkfFNmIGX-yJvcLGpVZQ3-w43Heo2Zki8eZ5LqD64Lu0rjMWoiyHc96z3jMtPATgnnvgoN-oaRepF7t1Shcqcs2h3AMJfDwTQMQNBlx9jZJ3S24jE");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">Out of the Woods</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex items-center gap-4">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg size-14"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBjItiPWEBceKjQR23iNGhNMmmGB5VF0f1QV7uxfe8J6XPEM0Yd38Ck692NaknG-bULsWJ8uvf-6W5ujcCmH4gUeh7lN86D1n6qPoYWrBejBuyrDdQk3hhaCwnncZ0UctiAkD3BxG7hkXGU8i_85kgDV0PIa0N9gbw1ALrnt7bYQ6DzuVLRLKdvYHOVTWizomKMvgyUT0m-H7f3HP3dY44oLuTDfKBv0VWXR2njt84vP5WJXppe-PivEuST61uNMZU55q24_K3RKdRZ");'
+            ></div>
+            <div class="flex flex-col justify-center">
+              <p class="text-white text-base font-medium leading-normal line-clamp-1">New Romantics</p>
+              <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Taylor Swift</p>
+            </div>
+          </div>
+          <div class="shrink-0">
+            <div class="text-white flex size-7 items-center justify-center" data-icon="Play" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex gap-2 border-t border-[#29382f] bg-[#1c2620] px-4 pb-3 pt-2">
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-white" href="#">
+            <div class="text-white flex h-8 items-center justify-center" data-icon="House" data-size="24px" data-weight="fill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"
+                ></path>
+              </svg>
+            </div>
+          </a>
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#9eb7a8]" href="#">
+            <div class="text-[#9eb7a8] flex h-8 items-center justify-center" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+              </svg>
+            </div>
+          </a>
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#9eb7a8]" href="#">
+            <div class="text-[#9eb7a8] flex h-8 items-center justify-center" data-icon="Bookmark" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,16V161.57l-51.77-32.35a8,8,0,0,0-8.48,0L72,161.56V48ZM132.23,177.22a8,8,0,0,0-8.48,0L72,209.57V180.43l56-35,56,35v29.14Z"
+                ></path>
+              </svg>
+            </div>
+          </a>
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#9eb7a8]" href="#">
+            <div class="text-[#9eb7a8] flex h-8 items-center justify-center" data-icon="User" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"
+                ></path>
+              </svg>
+            </div>
+          </a>
+        </div>
+        <div class="h-5 bg-[#1c2620]"></div>
+      </div>
+    </div>
+  </body>
+</html>
+
+
+
+
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Spline+Sans%3Awght%40400%3B500%3B700"
+    />
+
+    <title>Stitch Design</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body>
+    <div
+      class="relative flex size-full min-h-screen flex-col bg-[#111714] dark justify-between group/design-root overflow-x-hidden"
+      style='font-family: "Spline Sans", "Noto Sans", sans-serif;'
+    >
+      <div>
+        <div class="flex items-center bg-[#111714] p-4 pb-2 justify-between">
+          <div class="text-white flex size-12 shrink-0 items-center" data-icon="ArrowLeft" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+              <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+            </svg>
+          </div>
+          <div class="flex w-12 items-center justify-end">
+            <button
+              class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 bg-transparent text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0"
+            >
+              <div class="text-white" data-icon="DotsThree" data-size="24px" data-weight="regular">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm56-12a12,12,0,1,0,12,12A12,12,0,0,0,196,116ZM60,116a12,12,0,1,0,12,12A12,12,0,0,0,60,116Z"></path>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-col items-stretch gap-6 bg-[#111714] px-4 pb-4 pt-3 text-white">
+          <div class="flex items-center justify-center py-7">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-xl size-64"
+              style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDhsQHyFZu5A3YFaDLfayWPReDJP9_Q9z0ySiGWl6uKcEzb15ZwuDShwsf3OsNGOaS9zROFAMlpKuH3AzBbr_b098tC9ZoUoboI_Wd_JuFzdT4o2_AVAlDspYQKlAqlthMhpV1kWmvbMWv3uwoSpnaiEXCwVfMfw3ftP-oIntfH90BFtwIXjhz2GEQEugDXK-4T7H6OgDvrk2FoA1LAmLW8cSgH5BgfYZnQ8VzpWmej51h3OUU1n8yUtWs_IAIL03c2uuP_pSeqvh0w");'
+            ></div>
+          </div>
+          <div class="text-center">
+            <p class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] truncate">Midnight Serenade</p>
+            <p class="text-[#9eb7a8] text-base font-normal leading-normal truncate">Ethan Blake</p>
+          </div>
+          <div>
+            <div class="flex h-4 items-center justify-center">
+              <div class="h-1 flex-1 rounded-full bg-white"></div>
+              <div class="relative"><div class="absolute -left-2 -top-2 size-4 rounded-full bg-white"></div></div>
+              <div class="h-1 flex-1 rounded-full bg-white opacity-40"></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <p class="text-[#9eb7a8] text-xs font-medium leading-normal tracking-[0.015em]">1:17</p>
+              <p class="text-[#9eb7a8] text-xs font-medium leading-normal tracking-[0.015em]">2:23</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-center gap-6 pt-1">
+            <button class="flex shrink-0 items-center justify-center rounded-full size-10 text-white">
+              <div class="text-inherit" data-icon="SkipBack" data-size="32px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M208,47.88V208.12a16,16,0,0,1-24.43,13.43L64,146.77V216a8,8,0,0,1-16,0V40a8,8,0,0,1,16,0v69.23L183.57,34.45A15.95,15.95,0,0,1,208,47.88Z"></path>
+                </svg>
+              </div>
+            </button>
+            <button class="flex shrink-0 items-center justify-center rounded-full size-10 text-white">
+              <div class="text-inherit" data-icon="Rewind" data-size="32px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256">
+                  <path
+                    d="M232,71.84V184.16a15.92,15.92,0,0,1-24.48,13.34L128,146.86v37.3a15.92,15.92,0,0,1-24.48,13.34L15.33,141.34a15.8,15.8,0,0,1,0-26.68L103.52,58.5A15.91,15.91,0,0,1,128,71.84v37.3L207.52,58.5A15.91,15.91,0,0,1,232,71.84Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+            <button class="flex shrink-0 items-center justify-center rounded-full size-16 bg-[#38e07b] text-[#111714]">
+              <div class="text-inherit" data-icon="Play" data-size="32px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256">
+                  <path
+                    d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+            <button class="flex shrink-0 items-center justify-center rounded-full size-10 text-white">
+              <div class="text-inherit" data-icon="FastForward" data-size="32px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256">
+                  <path
+                    d="M248,128a15.76,15.76,0,0,1-7.33,13.34L152.48,197.5A15.91,15.91,0,0,1,128,184.16v-37.3L48.48,197.5A15.91,15.91,0,0,1,24,184.16V71.84A15.91,15.91,0,0,1,48.48,58.5L128,109.14V71.84A15.91,15.91,0,0,1,152.48,58.5l88.19,56.16A15.76,15.76,0,0,1,248,128Z"
+                  ></path>
+                </svg>
+              </div>
+            </button>
+            <button class="flex shrink-0 items-center justify-center rounded-full size-10 text-white">
+              <div class="text-inherit" data-icon="SkipForward" data-size="32px" data-weight="fill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M208,40V216a8,8,0,0,1-16,0V146.77L72.43,221.55A15.95,15.95,0,0,1,48,208.12V47.88A15.95,15.95,0,0,1,72.43,34.45L192,109.23V40a8,8,0,0,1,16,0Z"></path>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="@container">
+          <div class="gap-2 px-4 grid-cols-[repeat(auto-fit, minmax(80px,_1fr))] grid">
+            <div class="flex flex-col items-center gap-2 bg-[#111714] py-2.5 text-center">
+              <div class="rounded-full bg-[#29382f] p-2.5">
+                <div class="text-white" data-icon="Repeat" data-size="20px" data-weight="regular">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                    <path
+                      d="M24,128A72.08,72.08,0,0,1,96,56H204.69L194.34,45.66a8,8,0,0,1,11.32-11.32l24,24a8,8,0,0,1,0,11.32l-24,24a8,8,0,0,1-11.32-11.32L204.69,72H96a56.06,56.06,0,0,0-56,56,8,8,0,0,1-16,0Zm200-8a8,8,0,0,0-8,8,56.06,56.06,0,0,1-56,56H51.31l10.35-10.34a8,8,0,0,0-11.32-11.32l-24,24a8,8,0,0,0,0,11.32l24,24a8,8,0,0,0,11.32-11.32L51.31,200H160a72.08,72.08,0,0,0,72-72A8,8,0,0,0,224,120Z"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-white text-sm font-medium leading-normal">Repeat</p>
+            </div>
+            <div class="flex flex-col items-center gap-2 bg-[#111714] py-2.5 text-center">
+              <div class="rounded-full bg-[#29382f] p-2.5">
+                <div class="text-white" data-icon="DownloadSimple" data-size="20px" data-weight="regular">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                    <path
+                      d="M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-white text-sm font-medium leading-normal">Download MP3</p>
+            </div>
+            <div class="flex flex-col items-center gap-2 bg-[#111714] py-2.5 text-center">
+              <div class="rounded-full bg-[#29382f] p-2.5">
+                <div class="text-white" data-icon="DownloadSimple" data-size="20px" data-weight="regular">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                    <path
+                      d="M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-white text-sm font-medium leading-normal">Download MP4</p>
+            </div>
+            <div class="flex flex-col items-center gap-2 bg-[#111714] py-2.5 text-center">
+              <div class="rounded-full bg-[#29382f] p-2.5">
+                <div class="text-white" data-icon="Heart" data-size="20px" data-weight="regular">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256">
+                    <path
+                      d="M178,32c-20.65,0-38.73,8.88-50,23.89C116.73,40.88,98.65,32,78,32A62.07,62.07,0,0,0,16,94c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,220.66,240,164,240,94A62.07,62.07,0,0,0,178,32ZM128,206.8C109.74,196.16,32,147.69,32,94A46.06,46.06,0,0,1,78,48c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,147.61,146.24,196.15,128,206.8Z"
+                    ></path>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-white text-sm font-medium leading-normal">Favorite</p>
+            </div>
+          </div>
+        </div>
+        <div class="h-5 bg-[#111714]"></div>
+      </div>
+    </div>
+  </body>
+</html>
+
+
+
+
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Spline+Sans%3Awght%40400%3B500%3B700"
+    />
+
+    <title>Stitch Design</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body>
+    <div
+      class="relative flex size-full min-h-screen flex-col bg-[#111714] dark justify-between group/design-root overflow-x-hidden"
+      style='font-family: "Spline Sans", "Noto Sans", sans-serif;'
+    >
+      <div>
+        <div class="flex items-center bg-[#111714] p-4 pb-2 justify-between">
+          <div class="text-white flex size-12 shrink-0 items-center" data-icon="ArrowLeft" data-size="24px" data-weight="regular">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+              <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
+            </svg>
+          </div>
+          <h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">Settings</h2>
+        </div>
+        <h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Playback</h3>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Audio quality</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Choose the audio quality for streaming</p>
+          </div>
+          <div class="shrink-0"><p class="text-white text-base font-normal leading-normal">High</p></div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Auto-play</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Automatically play similar songs after the current one ends</p>
+          </div>
+          <div class="shrink-0">
+            <label
+              class="relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none bg-[#29382f] p-0.5 has-[:checked]:justify-end has-[:checked]:bg-[#38e07b]"
+            >
+              <div class="h-full w-[27px] rounded-full bg-white" style="box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 8px, rgba(0, 0, 0, 0.06) 0px 3px 1px;"></div>
+              <input type="checkbox" class="invisible absolute" />
+            </label>
+          </div>
+        </div>
+        <h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Downloads</h3>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Default download format</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Choose the default format for downloaded songs</p>
+          </div>
+          <div class="shrink-0"><p class="text-white text-base font-normal leading-normal">MP3</p></div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Download quality</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Choose the audio quality for downloaded songs</p>
+          </div>
+          <div class="shrink-0"><p class="text-white text-base font-normal leading-normal">High</p></div>
+        </div>
+        <h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Language &amp; Region</h3>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">App language</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Choose the language for the app</p>
+          </div>
+          <div class="shrink-0"><p class="text-white text-base font-normal leading-normal">English</p></div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Region</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Choose your region for content recommendations</p>
+          </div>
+          <div class="shrink-0"><p class="text-white text-base font-normal leading-normal">United States</p></div>
+        </div>
+        <h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Appearance</h3>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Theme</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Choose the overall theme for the app</p>
+          </div>
+          <div class="shrink-0"><p class="text-white text-base font-normal leading-normal">System</p></div>
+        </div>
+        <div class="flex items-center gap-4 bg-[#111714] px-4 min-h-[72px] py-2 justify-between">
+          <div class="flex flex-col justify-center">
+            <p class="text-white text-base font-medium leading-normal line-clamp-1">Accent color</p>
+            <p class="text-[#9eb7a8] text-sm font-normal leading-normal line-clamp-2">Choose the accent color for the app</p>
+          </div>
+          <div class="shrink-0"><p class="text-white text-base font-normal leading-normal">Blue</p></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex gap-2 border-t border-[#29382f] bg-[#1c2620] px-4 pb-3 pt-2">
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 rounded-full text-white" href="#">
+            <div class="text-white flex h-8 items-center justify-center" data-icon="House" data-size="24px" data-weight="fill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z"
+                ></path>
+              </svg>
+            </div>
+            <p class="text-white text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+          </a>
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#9eb7a8]" href="#">
+            <div class="text-[#9eb7a8] flex h-8 items-center justify-center" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+              </svg>
+            </div>
+            <p class="text-[#9eb7a8] text-xs font-medium leading-normal tracking-[0.015em]">Explore</p>
+          </a>
+          <a class="just flex flex-1 flex-col items-center justify-end gap-1 text-[#9eb7a8]" href="#">
+            <div class="text-[#9eb7a8] flex h-8 items-center justify-center" data-icon="Bookmark" data-size="24px" data-weight="regular">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                <path
+                  d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,16V161.57l-51.77-32.35a8,8,0,0,0-8.48,0L72,161.56V48ZM132.23,177.22a8,8,0,0,0-8.48,0L72,209.57V180.43l56-35,56,35v29.14Z"
+                ></path>
+              </svg>
+            </div>
+            <p class="text-[#9eb7a8] text-xs font-medium leading-normal tracking-[0.015em]">Library</p>
+          </a>
+        </div>
+        <div class="h-5 bg-[#1c2620]"></div>
+      </div>
+    </div>
+  </body>
+</html>
