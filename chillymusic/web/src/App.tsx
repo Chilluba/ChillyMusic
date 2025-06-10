@@ -1,15 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import Header from './components/layout/Header';
-import SearchInput from './components/ui/SearchInput';
+import SearchInputUI from './components/ui/SearchInput'; // Renamed to avoid confusion
 import RecentSearches from './components/feature/RecentSearches';
 import TrendingNow from './components/feature/TrendingNow';
+import SearchResultsPage from './pages/SearchResultsPage';
 import './styles/globals.css';
+import { SearchResult } from './types';
+// Removed apiService import from App.tsx as SearchResultsPage handles its own fetching
 
-// It's good practice to define pages, even if App.tsx is simple for now.
-const HomePage: React.FC = () => {
+const HomePageContent: React.FC = () => {
+  const navigate = useNavigate();
+
+  // This function will be called by SearchInputUI when a search is submitted
+  const handleSearchSubmit = (query: string) => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+    }
+  };
+
   return (
-    <main className='py-md'> {/* Added vertical padding to main content area */}
-      <SearchInput />
+    <main className='py-md'>
+      <SearchInputUI onSearchSubmit={handleSearchSubmit} />
       <RecentSearches />
       <TrendingNow />
     </main>
@@ -18,12 +30,16 @@ const HomePage: React.FC = () => {
 
 function App() {
   return (
-    // Ensure the body tag (via globals.css) or this root div has 'dark' class if needed by Tailwind config for dark mode.
-    // The tailwind.config.js is set to darkMode: 'class', and public/index.html body has class="dark"
-    <div className='min-h-screen bg-bg-primary text-text-primary font-sans'>
-      <Header />
-      <HomePage />
-    </div>
+    <Router>
+      <div className='min-h-screen bg-bg-primary text-text-primary font-sans'>
+        <Header />
+        <Routes>
+          <Route path='/' element={<HomePageContent />} />
+          <Route path='/search' element={<SearchResultsPage />} />
+          {/* Add other routes here */}
+        </Routes>
+      </div>
+    </Router>
   );
 }
 export default App;
