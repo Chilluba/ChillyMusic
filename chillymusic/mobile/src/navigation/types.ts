@@ -20,5 +20,6 @@ export type RootStackParamList = {
   Library: undefined;
   Settings: undefined;
   Player: PlayerScreenParams;
+  Downloads: undefined;
   // Add other screens here later
 };

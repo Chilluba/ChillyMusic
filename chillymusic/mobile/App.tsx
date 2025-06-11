@@ -15,6 +15,7 @@ import SearchResultsScreen from './src/screens/SearchResultsScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import PlayerScreen from './src/screens/PlayerScreen';
+import DownloadsScreen from './src/screens/DownloadsScreen'; // Import DownloadsScreen
 import HeaderComponent from './src/components/layout/Header';
 
 import { DefaultTheme as AppDefaultThemeConfig, Spacing, Typography } from './src/theme/theme';
@@ -130,6 +131,11 @@ const AppContent: React.FC = () => {
           name="Settings"
           component={SettingsScreen}
           options={{ title: 'Settings' }}
+        />
+        <Stack.Screen
+          name="Downloads"
+          component={DownloadsScreen}
+          options={{ title: 'My Downloads' }}
         />
         <Stack.Screen
           name="Player"

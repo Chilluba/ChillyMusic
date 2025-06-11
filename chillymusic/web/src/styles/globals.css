@@ -26,3 +26,82 @@
     @apply transition-colors duration-150;
   }
 }
+
+/* Custom Range Slider Styles */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px; /* Track height */
+  background: transparent; /* We style track pieces separately or rely on accent for progress */
+  cursor: pointer;
+  border-radius: 3px;
+  /* Ensure vertical alignment if needed */
+  /* margin: auto 0; */
+}
+
+/* Track Background (the part that's not filled) */
+input[type='range']::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  background-color: #EAEEF2; /* Light: bg-tertiary */
+  border-radius: 3px;
+  border: 1px solid #D0D7DE; /* Light: border-primary */
+}
+html.dark input[type='range']::-webkit-slider-runnable-track {
+  background-color: #21262D; /* Dark: dark-bg-tertiary */
+  border-color: #30363D; /* Dark: dark-border-primary */
+}
+
+input[type='range']::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  background-color: #EAEEF2; /* Light: bg-tertiary */
+  border-radius: 3px;
+  border: 1px solid #D0D7DE; /* Light: border-primary */
+}
+html.dark input[type='range']::-moz-range-track {
+  background-color: #21262D; /* Dark: dark-bg-tertiary */
+  border-color: #30363D; /* Dark: dark-border-primary */
+}
+
+/* Filled part of the track is handled by Tailwind's accent-color utilities on the input element itself */
+/* input class: accent-accent-primary dark:accent-dark-accent-primary */
+
+
+/* Thumb */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5px; /* (TrackHeight - ThumbHeight) / 2 + Border adjustments if thumb has border */
+                     /* (6px track - 14px thumb height) / 2 = -4px. Plus border considerations. */
+  height: 14px;
+  width: 14px;
+  background-color: #2DA44E; /* Light & Dark: accent-primary (can be different for dark if needed) */
+  border-radius: 50%;
+  border: 2px solid #F6F8FA; /* Light: bg-secondary */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+html.dark input[type='range']::-webkit-slider-thumb {
+  background-color: #2DA44E; /* Dark: dark-accent-primary (if different) */
+  border-color: #161B22; /* Dark: dark-bg-secondary */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+input[type='range']::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  background-color: #2DA44E; /* Light & Dark: accent-primary */
+  border-radius: 50%;
+  border: 2px solid #F6F8FA; /* Light: bg-secondary */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+html.dark input[type='range']::-moz-range-thumb {
+  background-color: #2DA44E; /* Dark: dark-accent-primary (if different) */
+  border-color: #161B22; /* Dark: dark-bg-secondary */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Focus states for thumb (optional, Tailwind focus:ring on input might be enough) */
+/* input[type='range']:focus::-webkit-slider-thumb { ... } */
+/* input[type='range']:focus::-moz-range-thumb { ... } */

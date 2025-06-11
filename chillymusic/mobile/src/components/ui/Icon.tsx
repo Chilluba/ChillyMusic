@@ -19,6 +19,7 @@ const iconMap: Record<string, string> = {
   Play: '▶️',
   Pause: '❚❚',
   Download: '⬇️',
+  DownloadQueue: '📥', // Added DownloadQueue
   ArrowLeft: '←',
   DotsThree: '⋮',
   Close: '✕',
@@ -26,7 +27,7 @@ const iconMap: Record<string, string> = {
   SkipBack: '⏮️',
   SkipForward: '⏭️',
   Repeat: '🔁',
-  RepeatOne: '🔁¹', // Added RepeatOne
+  RepeatOne: '🔁¹',
   Heart: '❤️',
   HeartOutline: '♡',
   PlaylistAdd: '➕🎶',

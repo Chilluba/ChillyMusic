@@ -50,6 +50,9 @@ const Header: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.navigate('Library')} style={styles.iconButton}>
             <Icon name="Bookmark" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Downloads')} style={styles.iconButton}>
+            <Icon name="DownloadQueue" size={24} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.iconButton}>
           <Icon name="Gear" size={24} color={theme.colors.textPrimary} />
         </TouchableOpacity>

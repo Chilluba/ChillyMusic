@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { WebLibraryItem } from '../types';
 import { getWebLibraryItems, removeWebLibraryItem } from '../services/webLibraryStorageService';
-import { fetchDownloadLink } from '../services/apiService'; // For re-try download
+import { fetchDownloadLink } from '../services/apiService';
 import Icon from '../components/ui/Icon';
 
 const LibraryPage: React.FC = () => {
@@ -43,7 +43,6 @@ const LibraryPage: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      // No alert needed here as browser handles download UX
     } catch (error: any) {
       console.error('Re-try download error:', error);
       setRetryError(prev => ({ ...prev, [item.id]: error.message || 'Failed to get new download link.' }));
@@ -54,7 +53,7 @@ const LibraryPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className='p-md text-center min-h-[calc(100vh-60px)] flex flex-col justify-center items-center bg-bg-primary dark:bg-dark-bg-primary'>
+      <div className='p-md text-center min-h-[calc(100vh-120px)] flex flex-col justify-center items-center bg-bg-primary dark:bg-dark-bg-primary'>
         <svg className='animate-spin h-10 w-10 text-accent-primary dark:text-dark-accent-primary' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
           <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
           <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
@@ -65,10 +64,10 @@ const LibraryPage: React.FC = () => {
   }
   if (libraryItems.length === 0 && !isLoading) {
     return (
-      <div className='p-md text-center min-h-[calc(100vh-60px)] flex flex-col justify-center items-center bg-bg-primary dark:bg-dark-bg-primary'>
+      <div className='p-md text-center min-h-[calc(100vh-120px)] flex flex-col justify-center items-center bg-bg-primary dark:bg-dark-bg-primary'>
         <p className='text-text-primary dark:text-dark-text-primary text-xl'>Your Web Download History is Empty</p>
         <p className='text-text-secondary dark:text-dark-text-secondary mt-sm'>
-          This section shows a history of downloads you've initiated from this browser.
+          This section shows a history of downloads initiated from this browser.
         </p>
         <Link to='/' className='mt-lg inline-block px-lg py-sm bg-accent-primary dark:bg-dark-accent-primary text-white dark:text-dark-text-primary rounded-md hover:bg-opacity-80 dark:hover:bg-opacity-80 transition-colors'>
           Find Music to Download
@@ -81,7 +80,7 @@ const LibraryPage: React.FC = () => {
     <div className='p-md bg-bg-primary text-text-primary dark:bg-dark-bg-primary dark:text-dark-text-primary min-h-[calc(100vh-60px)]'>
       <h1 className='text-h1 font-bold text-text-primary dark:text-dark-text-primary mb-lg'>Web Download History</h1>
       <p className='text-text-secondary dark:text-dark-text-secondary mb-md'>
-        This list tracks downloads started in this browser. Files are in your computer's downloads. Links may expire.
+        This list tracks downloads started here. Files are in your computer's downloads. Links can expire.
       </p>
       <div className='space-y-md'>
         {libraryItems.map(item => (
@@ -121,7 +120,6 @@ const LibraryPage: React.FC = () => {
       </div>
       {Object.entries(retryError).map(([itemId, errorMsg]) => {
         if (!errorMsg) return null;
-        // Find item title for better error message
         const errorItemTitle = libraryItems.find(libItem => libItem.id === itemId)?.title || 'Unknown track';
         return (
           <div key={itemId} className='fixed bottom-4 right-4 bg-error-primary text-white p-md rounded-md shadow-lg z-50 max-w-sm'>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'; // Added useCallback
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 // @ts-ignore
@@ -16,9 +16,7 @@ import Icon from '../components/ui/Icon';
 type LibraryScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Library'>;
 interface Props { navigation: LibraryScreenNavigationProp; }
 
-// Union type for items displayed in the list
 type LibraryDisplayItem = DownloadedMediaItem | ActiveDownloadProgress;
-
 
 const LibraryScreen: React.FC<Props> = ({ navigation }) => {
   const { theme } = useAppTheme();
@@ -35,32 +33,27 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
 
     const combinedItemsMap = new Map<string, LibraryDisplayItem>();
 
-    // Add active downloads first, using their composite ID from itemMetadata
     activeDownloadsArray.forEach(dl => {
-      if (dl.itemMetadata?.id) {
+      if (dl.itemMetadata?.id) { // itemMetadata.id is the composite downloadKey
         combinedItemsMap.set(dl.itemMetadata.id, dl);
       }
     });
 
-    // Add library items only if not already present as an active download
-    // or if the library item represents a completed version of an active download
     libraryMetaItems.forEach(libItem => {
-        // If an active download exists for this ID, and it's not yet "complete" (progress 100 or has error),
-        // the active download entry takes precedence.
-        const activeVersion = combinedItemsMap.get(libItem.id);
-        if (activeVersion && 'progress' in activeVersion && activeVersion.progress < 100 && !activeVersion.error) {
-            // Already handled by active download, do nothing
-        } else {
-            // If no active download, or if active download is complete/errored, use the library item
-            combinedItemsMap.set(libItem.id, libItem);
-        }
+      // libItem.id is already the composite downloadKey
+      const activeVersion = combinedItemsMap.get(libItem.id);
+      // If no active version, or if the active version is NOT currently downloading or queued, then use the library item.
+      // This means if an active download is completed or errored out, the library item (which is the source of truth for completed items) will be shown.
+      if (!activeVersion || (activeVersion.status !== 'downloading' && activeVersion.status !== 'queued')) {
+        combinedItemsMap.set(libItem.id, libItem);
+      }
     });
 
     const combinedItems = Array.from(combinedItemsMap.values());
 
     combinedItems.sort((a, b) => {
-      const aIsActiveNonError = 'progress' in a && a.progress < 100 && !a.error;
-      const bIsActiveNonError = 'progress' in b && b.progress < 100 && !b.error;
+      const aIsActiveNonError = 'status' in a && (a.status === 'downloading' || a.status === 'queued');
+      const bIsActiveNonError = 'status' in b && (b.status === 'downloading' || b.status === 'queued');
       if (aIsActiveNonError && !bIsActiveNonError) return -1;
       if (!aIsActiveNonError && bIsActiveNonError) return 1;
 
@@ -83,51 +76,46 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
 
 
   const handlePlayItem = (item: LibraryDisplayItem) => {
-    if ('filePath' in item && item.filePath && !('progress' in item)) { // Is DownloadedMediaItem (and not an ActiveDownload that completed)
-      playback.playTrack(item as DownloadedMediaItem);
-      navigation.navigate('Player');
-    } else if ('progress' in item && item.progress === 100 && item.filePath && item.itemMetadata) { // Is a completed ActiveDownload
-       const completedItem: DownloadedMediaItem = {
-           id: item.itemMetadata.id,
-           videoId: item.itemMetadata.videoId, title: item.itemMetadata.title, channel: item.itemMetadata.channel,
-           filePath: item.filePath, thumbnail: item.itemMetadata.thumbnail,
-           downloadedAt: new Date().toISOString(), // This might be inaccurate; ideally obtained from actual download time
-           format: item.itemMetadata.format, quality: item.itemMetadata.quality, duration: item.itemMetadata.duration,
-       };
-       playback.playTrack(completedItem);
+    // If it's a completed download from activeDownloads list or a persisted DownloadedMediaItem
+    if (('status' in item && item.status === 'completed' && item.filePath && item.itemMetadata) || ('filePath' in item && !('status' in item))) {
+       const playableItem: DownloadedMediaItem = 'status' in item && item.itemMetadata && item.filePath ?
+        { // Reconstruct DownloadedMediaItem from completed ActiveDownloadProgress
+            id: item.itemMetadata.id, videoId: item.itemMetadata.videoId, title: item.itemMetadata.title,
+            channel: item.itemMetadata.channel, filePath: item.filePath, thumbnail: item.itemMetadata.thumbnail,
+            downloadedAt: new Date().toISOString(), // This might not be the original download time
+            format: item.itemMetadata.format, quality: item.itemMetadata.quality, duration: item.itemMetadata.duration,
+        } : item as DownloadedMediaItem; // Already a DownloadedMediaItem
+
+       playback.playTrack(playableItem);
        navigation.navigate('Player');
     } else {
-      Alert.alert('Cannot Play', 'Item is still downloading, has an error, or file path is missing.');
+      Alert.alert('Cannot Play', 'Item is still downloading or has an error.');
     }
   };
 
   const handleDeleteItem = async (item: LibraryDisplayItem) => {
-    const itemId = 'id' in item ? item.id : (item.itemMetadata?.id || '');
+    const itemId = 'id' in item ? item.id : (item.itemMetadata?.id || ''); // item.id for DownloadedMediaItem, item.itemMetadata.id for ActiveDownload
     const itemTitle = 'title' in item ? item.title : (item.itemMetadata?.title || 'this item');
-    const itemFilePath = 'filePath' in item ? item.filePath : ('filePath' in item && item.filePath); // Check both types
-
-    if (!itemId) {
-        Alert.alert("Error", "Item ID not found, cannot delete.");
-        return;
+    let itemFilePath = 'filePath' in item ? item.filePath : undefined;
+    if (!itemFilePath && 'itemMetadata' in item && item.itemMetadata?.id) { // If it's an active download, path might be there if completed
+        const activeDl = downloadContext.activeDownloads[item.itemMetadata.id];
+        if (activeDl?.status === 'completed') itemFilePath = activeDl.filePath;
     }
+
+
+    if (!itemId) { Alert.alert("Error", "Item ID not found, cannot delete."); return; }
 
     const isCurrentlyPlayingThisItem = playback.currentTrack?.id === itemId && playback.isPlaying;
 
-    Alert.alert(
-      'Confirm Deletion',
-      `Are you sure you want to remove "${itemTitle}"? This will cancel ongoing downloads and delete the file if downloaded.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
+    Alert.alert( 'Confirm Deletion', `Are you sure you want to remove "${itemTitle}"? This will cancel ongoing downloads and delete the file if downloaded.`,
+      [ { text: 'Cancel', style: 'cancel' },
         { text: 'Confirm', style: 'destructive', onPress: async () => {
-            if (isCurrentlyPlayingThisItem) {
-              playback.clearPlayer();
-            }
-            // If it's an active download, try to cancel it
-            if ('progress' in item && item.jobId && item.progress < 100 && !item.error) {
+            if (isCurrentlyPlayingThisItem) { playback.clearPlayer(); }
+
+            if ('status' in item && item.jobId && item.status === 'downloading') { // It's an active, ongoing download
               await downloadContext.cancelDownload(itemId);
             }
 
-            // Attempt to delete file if path exists
             if (itemFilePath) {
               try {
                 const fileExists = await RNFS.exists(itemFilePath);
@@ -135,7 +123,7 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
               } catch (e) { console.error('Error deleting file during library removal:', e); }
             }
             await removeLibraryItemMeta(itemId);
-            downloadContext.clearCompletedOrErroredDownload(itemId); // Also clear from active downloads if it was there
+            downloadContext.clearCompletedOrErroredDownload(itemId);
             loadLibraryAndDownloads();
             Alert.alert('Removed', `"${itemTitle}" removed.`);
         }}
@@ -143,7 +131,7 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
-  const styles = StyleSheet.create({ /* ... styles from previous step ... */
+  const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.backgroundPrimary },
     listContent: { padding: theme.spacing.md, paddingBottom: playback.currentTrack ? 80 + theme.spacing.md : theme.spacing.md },
     miniPlayerTouchableWrapper: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10 },
@@ -166,20 +154,20 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
     errorText: { fontSize: theme.typography.fontSize.caption, color: theme.colors.error, fontFamily: theme.typography.fontFamily.primary },
   });
 
-
   if (isLoadingList) {  return <View style={styles.centered}><ActivityIndicator size='large' color={theme.colors.accentPrimary} /></View>; }
   if (displayItems.length === 0 && !isLoadingList) { return <View style={styles.centered}><Text style={styles.emptyText}>Your library is empty. Download some music!</Text></View>; }
 
   const renderDisplayItem = ({ item }: { item: LibraryDisplayItem }) => {
-    const isActualDownload = 'progress' in item && typeof item.progress === 'number';
+    const isActualDownloadProgressEntry = 'status' in item && typeof item.status === 'string'; // Check if it's ActiveDownloadProgress
 
-    const title = isActualDownload ? item.itemMetadata?.title : item.title;
-    const channel = isActualDownload ? item.itemMetadata?.channel : item.channel;
-    const thumbnail = isActualDownload ? item.itemMetadata?.thumbnail : item.thumbnail;
-    const duration = isActualDownload ? item.itemMetadata?.duration : item.duration;
-    const id = isActualDownload ? item.itemMetadata!.id : item.id;
-    const videoId = isActualDownload ? item.itemMetadata!.videoId : item.videoId;
-    const downloadedAt = 'downloadedAt' in item ? item.downloadedAt : new Date().toISOString(); // Fallback for active downloads
+    const title = isActualDownloadProgressEntry ? item.itemMetadata?.title : item.title;
+    const channel = isActualDownloadProgressEntry ? item.itemMetadata?.channel : item.channel;
+    const thumbnail = isActualDownloadProgressEntry ? item.itemMetadata?.thumbnail : item.thumbnail;
+    const duration = isActualDownloadProgressEntry ? item.itemMetadata?.duration : item.duration;
+    const id = isActualDownloadProgressEntry ? item.itemMetadata!.id : item.id;
+    const videoId = isActualDownloadProgressEntry ? item.itemMetadata!.videoId : item.videoId;
+    const downloadedAt = 'downloadedAt' in item ? item.downloadedAt : (isActualDownloadProgressEntry ? new Date(item.itemMetadata!.addedAt || 0).toISOString() : new Date(0).toISOString());
+
 
     const cardItemAdapter: SearchResult = {
         id: id, videoId: videoId, title: title || 'N/A',
@@ -199,18 +187,20 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
             isLoading={isLoadingItemPlayback}
             onDownloadMp3={() => handleDeleteItem(item)}
         />
-        {isActualDownload && !item.error && item.progress < 100 && (
+        {isActualDownloadProgressEntry && (
           <View style={styles.downloadStatusContainer}>
-            <Text style={[styles.downloadStatusText, { color: theme.colors.accentSecondary }]}>
-              Downloading: {item.progress.toFixed(0)}%
-            </Text>
-            <View style={styles.itemProgressBarOuter}><View style={[styles.itemProgressBarInner, {width: `${item.progress}%`}]} /></View>
+            {item.status === 'queued' && ( <Text style={[styles.downloadStatusText, { color: theme.colors.textMuted }]}>Queued</Text> )}
+            {item.status === 'downloading' && (
+              <>
+                <Text style={[styles.downloadStatusText, { color: theme.colors.accentSecondary }]}> Downloading: {item.progress.toFixed(0)}% </Text>
+                <View style={styles.itemProgressBarOuter}><View style={[styles.itemProgressBarInner, {width: `${item.progress}%`}]} /></View>
+              </>
+            )}
+            {item.status === 'error' && ( <Text style={[styles.downloadStatusText, {color: theme.colors.error}]}>Error: {item.error}</Text> )}
+            {/* Completed status is implicitly handled by item being a DownloadedMediaItem from storage if not actively downloading */}
+            {item.status === 'cancelled' && ( <Text style={[styles.downloadStatusText, {color: theme.colors.textMuted}]}>Cancelled</Text> )}
           </View>
         )}
-         {isActualDownload && item.error && (
-          <View style={styles.downloadStatusContainer}><Text style={[styles.downloadStatusText, {color: theme.colors.error}]}>Error: {item.error}</Text></View>
-        )}
-        {/* No explicit "Downloaded" text shown under card if it's from activeDownloads and progress is 100, as it being in library implies that */}
       </View>
     );
   };
