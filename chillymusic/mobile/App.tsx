@@ -12,6 +12,7 @@ import TrendingNow from './src/components/feature/TrendingNow';
 import SearchResultsScreen from './src/screens/SearchResultsScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import PlayerScreen from './src/screens/PlayerScreen'; // Import PlayerScreen
 import HeaderComponent from './src/components/layout/Header';
 
 import { DefaultTheme as AppDefaultTheme, Spacing, Typography, Colors } from './src/theme/theme'; // Import Colors for nav theme
@@ -136,6 +137,15 @@ const AppContent: React.FC = () => {
           name="Settings"
           component={SettingsScreen} // Already updated to use useAppTheme
           options={{ title: 'Settings' }}
+        />
+        <Stack.Screen
+          name="Player"
+          component={PlayerScreen}
+          options={{
+            title: 'Now Playing',
+            headerBackTitleVisible: false,
+            // presentation: 'modal', // Optional: for modal presentation
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

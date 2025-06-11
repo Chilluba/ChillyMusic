@@ -179,6 +179,18 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
       )}
 
       {selectedTrack && (
+      <TouchableOpacity
+        style={styles.miniPlayerTouchableWrapper} // New wrapper style
+        onPress={() => {
+          if (selectedTrack) {
+            navigation.navigate('Player', {
+              track: selectedTrack, // selectedTrack is DownloadedMediaItem here
+              isPlaying: isPlaying,
+              progress: playbackProgress
+            });
+          }
+        }}
+      >
         <View style={styles.miniPlayer}>
             <View style={styles.miniPlayerInfoAndButton}>
                 <View style={styles.miniPlayerInfo}>
@@ -203,9 +215,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: DefaultTheme.colors.backgroundPrimary },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.lg },
   emptyText: { fontSize: Typography.fontSize.bodyLarge, color: DefaultTheme.colors.textSecondary, textAlign: 'center' },
-  listContent: { padding: Spacing.md, paddingBottom: 80 },
+  listContent: { padding: Spacing.md, paddingBottom: 80 }, // Ensure paddingBottom accommodates miniPlayer
   // separator: { height: 1, backgroundColor: DefaultTheme.colors.border, marginHorizontal: Spacing.md, marginVertical: Spacing.xs },
   videoPlayer: { width: 0, height: 0 },
+  miniPlayerTouchableWrapper: { // Style for the new TouchableOpacity
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10, // Ensure it's above other flatlist content
+  },
   miniPlayer: { position: 'absolute', bottom: 0,left: 0, right: 0, backgroundColor: DefaultTheme.colors.backgroundSecondary, borderTopWidth: 1, borderTopColor: DefaultTheme.colors.border, paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xs, },
   miniPlayerInfoAndButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.xs, },
   miniPlayerInfo: { flex: 1, marginRight: Spacing.sm, },

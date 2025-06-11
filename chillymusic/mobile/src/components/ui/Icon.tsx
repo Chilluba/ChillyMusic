@@ -22,7 +22,9 @@ const iconMap: Record<string, string> = {
   ArrowLeft: '←',
   DotsThree: '⋮',
   Close: '✕',
-  Bookmark: '🔖', // Added Bookmark icon
+  Bookmark: '🔖',
+  SkipBack: '⏮️', // Added SkipBack icon
+  SkipForward: '⏭️', // Added SkipForward icon
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {

@@ -2,7 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', sans-serif;
-  @apply bg-bg-primary text-text-primary; /* Default dark theme */
+@layer base {
+  html {
+    @apply bg-bg-primary text-text-primary font-sans;
+    /* Smooth transitions for color properties */
+    transition-property: background-color, color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+
+  html.dark {
+    @apply bg-dark-bg-primary text-dark-text-primary;
+  }
+
+  /* Apply dark mode styles directly to elements if needed, or rely on utility classes */
+  /* For example, if a component doesn't explicitly use dark: variants for all children */
+  /* body.dark {
+    @apply bg-dark-bg-primary text-dark-text-primary;
+  } */
+
+  /* Ensure links also transition nicely */
+  a {
+    @apply transition-colors duration-150;
+  }
 }

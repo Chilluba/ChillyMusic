@@ -300,8 +300,21 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
         />
       )}
 
-      {selectedTrackForPlayback && ( <View style={styles.miniPlayer}>
-        <View style={styles.miniPlayerInfoAndButton}>
+      {selectedTrackForPlayback && (
+      <TouchableOpacity
+        style={styles.miniPlayerTouchableWrapper} // New wrapper style
+        onPress={() => {
+          if (selectedTrackForPlayback) {
+            navigation.navigate('Player', {
+              track: selectedTrackForPlayback,
+              isPlaying: isPlaying,
+              progress: playbackProgress
+            });
+          }
+        }}
+      >
+        <View style={styles.miniPlayer}>
+          <View style={styles.miniPlayerInfoAndButton}>
             <View style={styles.miniPlayerInfo}>
                 <Text style={styles.miniPlayerText} numberOfLines={1}>{selectedTrackForPlayback.title}</Text>
                 <Text style={styles.miniPlayerArtist} numberOfLines={1}>{selectedTrackForPlayback.channel}</Text>
@@ -336,7 +349,7 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: DefaultTheme.colors.backgroundPrimary },
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.md },
-  listContent: { padding: Spacing.md, paddingBottom: 80 },
+  listContent: { padding: Spacing.md, paddingBottom: 80 }, // Ensure paddingBottom accommodates miniPlayer
   emptyText: { fontSize: Typography.fontSize.bodyLarge, color: DefaultTheme.colors.textSecondary, textAlign: 'center', marginBottom: Spacing.md },
   goBackButton: {
     backgroundColor: DefaultTheme.colors.accentPrimary,
@@ -362,6 +375,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.xs,
+    // No change to miniPlayer content style itself, just wrapped.
+  },
+  miniPlayerTouchableWrapper: { // Style for the new TouchableOpacity
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10, // Ensure it's above other flatlist content
   },
   miniPlayerInfoAndButton: {
     flexDirection: 'row',

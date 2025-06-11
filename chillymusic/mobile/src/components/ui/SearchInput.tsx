@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native'; // Removed Alert
-import { DefaultTheme, Spacing, Typography, BorderRadius } from '../../theme/theme';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { useAppTheme } from '../../context/ThemeContext'; // Import useAppTheme
 import Icon from './Icon';
-// Removed API service imports, SearchInput will now be dumber
 
 interface SearchInputProps {
-  onSearchSubmit: (query: string) => void; // Changed to mandatory
-  isLoading?: boolean; // isLoading is now a prop controlled by parent
+  onSearchSubmit: (query: string) => void;
+  isLoading?: boolean;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({ onSearchSubmit, isLoading }) => {
+  const { theme } = useAppTheme(); // Use theme from context
   const [query, setQuery] = useState('');
 
   const handlePressSearch = () => {
@@ -17,25 +17,63 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearchSubmit, isLoading }) 
     onSearchSubmit(query);
   };
 
+  // Define styles inside or make it a function of theme to ensure it updates
+  const styles = StyleSheet.create({
+    container: {
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.lg
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.backgroundTertiary,
+      borderRadius: theme.borderRadius.md,
+      height: 52
+    },
+    iconWrapper: {
+      paddingLeft: theme.spacing.md
+    },
+    input: {
+      flex: 1,
+      marginLeft: theme.spacing.sm,
+      marginRight: theme.spacing.sm,
+      fontSize: theme.typography.fontSize.bodyLarge,
+      color: theme.colors.textPrimary,
+      fontFamily: theme.typography.fontFamily.primary
+    },
+    loader: {
+      marginRight: theme.spacing.md
+    },
+    clearButtonTouchable: {
+      paddingHorizontal: theme.spacing.md,
+      height: '100%',
+      justifyContent: 'center'
+    },
+    clearButtonText: {
+      fontSize: theme.typography.fontSize.h1, // Typically larger for an 'X'
+      color: theme.colors.textMuted
+    },
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.inputWrapper}>
         <View style={styles.iconWrapper}>
-          <Icon name="MagnifyingGlass" size={20} color={DefaultTheme.colors.textMuted} />
+          <Icon name="MagnifyingGlass" size={20} color={theme.colors.textMuted} />
         </View>
         <TextInput
           style={styles.input}
           placeholder="Search for music, artists, or albums"
-          placeholderTextColor={DefaultTheme.colors.textMuted}
+          placeholderTextColor={theme.colors.textMuted}
           value={query}
           onChangeText={setQuery}
-          onSubmitEditing={handlePressSearch} // Trigger search on keyboard submit
+          onSubmitEditing={handlePressSearch}
           returnKeyType="search"
-          selectionColor={DefaultTheme.colors.accentPrimary}
-          editable={!isLoading} // Disable input when loading
+          selectionColor={theme.colors.accentPrimary}
+          editable={!isLoading}
         />
         {isLoading ? (
-          <ActivityIndicator size="small" color={DefaultTheme.colors.accentPrimary} style={styles.loader} />
+          <ActivityIndicator size="small" color={theme.colors.accentPrimary} style={styles.loader} />
         ) : (
           query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')} style={styles.clearButtonTouchable} disabled={isLoading}>
@@ -47,42 +85,5 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearchSubmit, isLoading }) 
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.lg,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: DefaultTheme.colors.backgroundTertiary,
-    borderRadius: BorderRadius.md,
-    height: 52,
-  },
-  iconWrapper: {
-    paddingLeft: Spacing.md,
-  },
-  input: {
-    flex: 1,
-    marginLeft: Spacing.sm,
-    marginRight: Spacing.sm,
-    fontSize: Typography.fontSize.bodyLarge,
-    color: DefaultTheme.colors.textPrimary,
-    fontFamily: Typography.fontFamily.primary,
-  },
-  loader: {
-    marginRight: Spacing.md,
-  },
-  clearButtonTouchable: {
-    paddingHorizontal: Spacing.md,
-    height: '100%',
-    justifyContent: 'center',
-  },
-  clearButtonText: {
-    fontSize: Typography.fontSize.h1,
-    color: DefaultTheme.colors.textMuted,
-  },
-});
 
 export default SearchInput;

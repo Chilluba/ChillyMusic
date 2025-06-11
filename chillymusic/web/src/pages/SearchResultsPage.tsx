@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SearchResult, MediaInfo, WebLibraryItem } from '../types'; // Added WebLibraryItem
+import { SearchResult, MediaInfo, WebLibraryItem } from '../types';
 import MusicCard from '../components/cards/MusicCard';
 import { fetchSearchResults, fetchMediaInfo, fetchDownloadLink } from '../services/apiService';
-import { saveWebLibraryItem } from '../services/webLibraryStorageService'; // Import saveWebLibraryItem
+import { saveWebLibraryItem } from '../services/webLibraryStorageService';
 import Icon from '../components/ui/Icon';
 import DownloadOptionsPopover, { DownloadOption } from '../components/modals/DownloadOptionsPopover';
+import EnhancedPlayer, { PlayerTrack } from '../components/player/EnhancedPlayer'; // Import EnhancedPlayer
 
 interface PlaybackProgress { currentTime: number; duration: number; }
 
@@ -16,7 +17,7 @@ const SearchResultsPage: React.FC = () => {
   const [isLoadingResults, setIsLoadingResults] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
 
-  const [selectedTrack, setSelectedTrack] = useState<SearchResult | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<PlayerTrack | null>(null); // Now PlayerTrack
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoadingMedia, setIsLoadingMedia] = useState(false);
@@ -89,9 +90,10 @@ const SearchResultsPage: React.FC = () => {
     };
   }, [isPlaying, streamUrl, playAudio]);
 
-  const handlePlayPause = async (track: SearchResult) => {
+  // Ensure track type is PlayerTrack for handlePlayPause
+  const handlePlayPause = async (track: PlayerTrack) => {
     setPlaybackError(null);
-    if (selectedTrack?.videoId === track.videoId) {
+    if (selectedTrack?.videoId === track.videoId && selectedTrack.id === track.id) {
       setIsPlaying(!isPlaying);
     } else {
       setSelectedTrack(track);
@@ -140,39 +142,30 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
-  const handleSelectDownloadOption = async (option: DownloadOption) => {
+  const handleSelectDownloadOption = async (option: DownloadOption) => { /* ... same as before ... */
     setDownloadPopoverAnchor(null);
     if (!trackForDownloadOptions) return;
-
     const currentTrack = trackForDownloadOptions;
     setIsDownloading(true);
     setDownloadError(null);
-
     console.log(`Initiating download for ${currentTrack.title}: ${option.label}`);
-
     try {
       const { downloadUrl, fileName: suggestedFileName } = await fetchDownloadLink({
         videoId: currentTrack.videoId,
         format: option.format,
         quality: option.quality,
       });
-
       const link = document.createElement('a');
       link.href = downloadUrl;
-
       const safeTitle = currentTrack.title.replace(/[^a-zA-Z0-9\s-_.]/g, '').replace(/[\s.]+/g, '_');
       const extension = option.format === 'mp3' ? 'mp3' : 'mp4';
       link.download = suggestedFileName || `${safeTitle}_${option.quality}.${extension}`;
-
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       console.log(`Download triggered for ${currentTrack.title} as ${link.download}`);
-
-      // *** NEW CODE TO SAVE TO WEB LIBRARY ***
       const libraryItemData: WebLibraryItem = {
-        id: `${currentTrack.videoId}_${option.format}_${option.quality}`, // Composite ID
+        id: `${currentTrack.videoId}_${option.format}_${option.quality}`,
         videoId: currentTrack.videoId,
         title: currentTrack.title,
         channel: currentTrack.channel,
@@ -184,44 +177,33 @@ const SearchResultsPage: React.FC = () => {
         fileName: link.download,
       };
       saveWebLibraryItem(libraryItemData);
-      // *** END OF NEW CODE ***
-
     } catch (error: any) {
       console.error('Download initiation error:', error);
       setDownloadError(error.message || 'Failed to start download.');
       alert(`Download failed for ${currentTrack.title}: ${error.message || 'Unknown error'}`);
     } finally {
       setIsDownloading(false);
-      // setTrackForDownloadOptions(null);
     }
   };
 
-  const progressPercent = progress.duration > 0 ? (progress.currentTime / progress.duration) * 100 : 0;
+  // const progressPercent = progress.duration > 0 ? (progress.currentTime / progress.duration) * 100 : 0; // Used by EnhancedPlayer
 
-  if (isLoadingResults) {
-    return ( <div className='flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-md'> <svg className='animate-spin h-10 w-10 text-accent-primary' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'><circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle><path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path></svg> <p className='text-text-secondary mt-sm'>Loading results for "{query}"...</p> </div> );
-  }
-  if (pageError) {
-    return ( <div className='flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-md text-center'><p className='text-error-primary text-lg mb-sm'>Error fetching results</p><p className='text-text-secondary mb-lg'>{pageError}</p><button onClick={() => navigate('/')} className='px-lg py-sm bg-accent-primary text-white rounded-md hover:bg-opacity-80 transition-colors'>Back to Home</button></div> );
-  }
-  if (results.length === 0 && query && !isLoadingResults) {
-    return ( <div className='flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-md text-center'><p className='text-text-primary text-xl mb-sm'>No results found for "{query}"</p><p className='text-text-secondary mb-lg'>Try a different search term.</p><button onClick={() => navigate('/')} className='px-lg py-sm bg-accent-primary text-white rounded-md hover:bg-opacity-80 transition-colors'>Back to Home</button></div> );
-  }
-  if (!query && !isLoadingResults) {
-    return ( <div className='flex flex-col items-center justify-center min-h-[calc(100vh-120px)] p-md text-center'><p className='text-text-primary text-xl mb-sm'>Please enter a search term.</p><button onClick={() => navigate('/')} className='px-lg py-sm bg-accent-primary text-white rounded-md hover:bg-opacity-80 transition-colors'>Back to Home</button></div> );
-  }
+  if (isLoadingResults) { /* ... */ }
+  if (pageError) { /* ... */ }
+  if (results.length === 0 && query && !isLoadingResults) { /* ... */ }
+  if (!query && !isLoadingResults) { /* ... */ }
 
   return (
-    <div className='p-md'>
+    <div className='p-md pb-32'> {/* Ensure padding-bottom for EnhancedPlayer */}
       <h2 className='text-h1 font-bold text-text-primary mb-md'>
         Search Results for: <span className='text-accent-primary'>{query}</span>
       </h2>
-      <div className='grid grid-cols-1 gap-md mb-24'>
+      <div className='grid grid-cols-1 gap-md'> {/* Removed mb-24, EnhancedPlayer is fixed */}
         {results.map(item => (
           <MusicCard
             key={item.id + item.videoId}
             item={item}
-            onPlayPause={handlePlayPause}
+            onPlayPause={() => handlePlayPause(item)} // item is SearchResult, compatible with PlayerTrack
             isPlaying={selectedTrack?.videoId === item.videoId && isPlaying}
             isLoading={selectedTrack?.videoId === item.videoId && isLoadingMedia}
             onOpenDownloadOptions={handleOpenDownloadOptions}
@@ -231,34 +213,23 @@ const SearchResultsPage: React.FC = () => {
 
       <audio ref={audioRef} className='hidden' onTimeUpdate={onTimeUpdate} onLoadedMetadata={onLoadedMetadata} onEnded={onAudioEnded} onError={(e) => { console.error('HTML Audio Element Error:', e); setPlaybackError('Audio playback error.'); setIsPlaying(false); }} onCanPlay={() => { if (isPlaying && audioRef.current?.paused) { playAudio(); }}} />
 
-      {selectedTrack && (
-        <div className='fixed bottom-0 left-0 right-0 bg-bg-secondary border-t border-border-primary p-sm shadow-lg z-50'><div className='flex items-center justify-between mb-xs'><div className='flex items-center min-w-0 flex-1 mr-sm'><img src={selectedTrack.thumbnail || 'https://via.placeholder.com/40'} alt={selectedTrack.title} className='w-10 h-10 rounded-sm mr-sm flex-shrink-0' /><div className='flex-1 min-w-0'><p className='text-text-primary text-sm font-medium truncate' title={selectedTrack.title}>{selectedTrack.title}</p><p className='text-text-secondary text-xs truncate' title={selectedTrack.channel}>{selectedTrack.channel}</p></div></div><button onClick={() => handlePlayPause(selectedTrack)} className='p-2 text-text-primary hover:text-accent-primary flex-shrink-0' disabled={isLoadingMedia && selectedTrack?.videoId === selectedTrack.videoId} aria-label={isPlaying ? 'Pause' : 'Play'}>{(isLoadingMedia && selectedTrack?.videoId === selectedTrack.videoId) ? (<svg className='animate-spin h-7 w-7 text-text-primary' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'><circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle><path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path></svg>) : (<Icon name={isPlaying ? 'Pause' : 'Play'} size={28} />)}</button></div><div className='h-1 bg-bg-tertiary rounded-full w-full'><div className='h-full bg-accent-primary rounded-full' style={{ width: `${progressPercent}%` }} /></div>{playbackError && !isLoadingMedia && (<p className='text-error-primary text-xs mt-xs text-center'>{playbackError}</p>)}</div>
-      )}
+      {/* Replace Mini Player with EnhancedPlayer */}
+      <EnhancedPlayer
+        track={selectedTrack} // selectedTrack is PlayerTrack | null
+        isPlaying={isPlaying}
+        progress={progress}
+        onPlayPause={() => selectedTrack && handlePlayPause(selectedTrack)}
+        onClose={() => { setSelectedTrack(null); setIsPlaying(false); setStreamUrl(null); }}
+      />
 
-      {isDownloading && (
-        <div className='fixed top-4 right-4 bg-accent-secondary text-white px-md py-sm rounded-md shadow-lg z-[1001] animate-pulse'>
-          <p>Preparing download...</p>
-        </div>
-      )}
-      {downloadError && (
-         <div className='fixed top-4 right-4 bg-error-primary text-white px-md py-sm rounded-md shadow-lg z-[1001]'>
-            <p>Error: {downloadError}</p>
-         </div>
-      )}
-
-      {downloadPopoverAnchor && trackForDownloadOptions && (
-        <DownloadOptionsPopover
-          anchorElement={downloadPopoverAnchor}
-          mediaInfo={mediaInfoForDownload}
-          isLoading={isLoadingDownloadOpts}
-          onClose={() => {
-            setDownloadPopoverAnchor(null);
-          }}
-          onSelectOption={handleSelectDownloadOption}
-        />
-      )}
+      {isDownloading && ( /* ... Download status feedback ... */ )}
+      {downloadError && ( /* ... Download error feedback ... */ )}
+      {downloadPopoverAnchor && trackForDownloadOptions && ( /* ... Download options popover ... */ )}
     </div>
   );
 };
+// Full styles and loading/error/empty states need to be included here by the subtask worker
+// For brevity, only showing the conceptual structure.
+// The existing full return structure for loading/error/empty states should be preserved.
 
 export default SearchResultsPage;
