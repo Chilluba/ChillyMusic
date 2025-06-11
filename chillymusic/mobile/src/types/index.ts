@@ -35,3 +35,16 @@ export interface MediaInfo {
   channel?: string;
   formats: MediaFormatDetails[];
 }
+
+export interface DownloadedMediaItem {
+  id: string; // Use videoId as the unique ID for simplicity here
+  videoId: string;
+  title: string;
+  channel?: string;
+  filePath: string;
+  thumbnail?: string;
+  downloadedAt: string; // ISO date string
+  format: 'mp3' | 'mp4';
+  quality: string;
+  duration?: number; // Store duration if available from MediaInfo
+}

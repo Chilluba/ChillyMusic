@@ -35,3 +35,16 @@ export interface MediaInfo {
   channel?: string;
   formats: MediaFormatDetails[];
 }
+
+export interface WebLibraryItem {
+  id: string; // videoId + format + quality (to identify unique download initiations)
+  videoId: string;
+  title: string;
+  channel?: string;
+  thumbnail?: string;
+  initiatedAt: string; // ISO date string of when download was started
+  format: 'mp3' | 'mp4';
+  quality: string;
+  originalDownloadUrl?: string; // The URL provided by yt-dlp, might expire
+  fileName?: string; // The filename used when download was triggered
+}

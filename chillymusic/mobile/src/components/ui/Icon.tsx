@@ -21,7 +21,8 @@ const iconMap: Record<string, string> = {
   Download: '⬇️',
   ArrowLeft: '←',
   DotsThree: '⋮',
-  Close: '✕', // Added Close icon
+  Close: '✕',
+  Bookmark: '🔖', // Added Bookmark icon
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {

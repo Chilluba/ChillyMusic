@@ -6,10 +6,11 @@ import Video, { OnLoadData, OnProgressData, OnErrorData } from 'react-native-vid
 import RNFS from 'react-native-fs'; // Import react-native-fs
 
 import { RootStackParamList } from '../navigation/types';
-import { SearchResult, MediaInfo } from '../types'; // MediaFormatDetails removed as not directly used in this file's state/props
+import { SearchResult, MediaInfo, DownloadedMediaItem } from '../types'; // Added DownloadedMediaItem
 import MusicCard from '../components/cards/MusicCard';
 import { DefaultTheme, Spacing, Typography } from '../theme/theme';
-import { fetchMediaInfo, fetchDownloadLink, DownloadUrlResponse } from '../services/apiService'; // Added fetchDownloadLink and DownloadUrlResponse
+import { fetchMediaInfo, fetchDownloadLink, DownloadUrlResponse } from '../services/apiService';
+import { saveLibraryItem } from '../services/libraryStorageService'; // Import saveLibraryItem
 import Icon from '../components/ui/Icon';
 import DownloadOptionsModal, { DownloadOption } from '../components/modals/DownloadOptionsModal';
 
@@ -175,6 +176,23 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
       if (result.statusCode === 200) {
         Alert.alert('Download Complete', `${currentTrack.title} downloaded successfully to ${destPath}!`);
         setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], progress: 100, path: destPath } }));
+
+        // *** NEW CODE TO SAVE TO LIBRARY ***
+        const libraryItemData: DownloadedMediaItem = {
+          id: `${currentTrack.videoId}_${option.format}_${option.quality}`, // Composite ID for library
+          videoId: currentTrack.videoId,
+          title: currentTrack.title,
+          channel: currentTrack.channel,
+          filePath: destPath,
+          thumbnail: currentTrack.thumbnail,
+          downloadedAt: new Date().toISOString(),
+          format: option.format,
+          quality: option.quality,
+          duration: mediaInfoForDownload?.duration,
+        };
+        await saveLibraryItem(libraryItemData);
+        // *** END OF NEW CODE ***
+
       } else {
         throw new Error(`Download failed: Status ${result.statusCode}`);
       }
@@ -186,26 +204,26 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
     // Not clearing trackForDownload here to allow status to be shown on card
   };
 
-  const onVideoLoad = (data: OnLoadData) => { /* ... from previous step ... */
+  const onVideoLoad = (data: OnLoadData) => {
     console.log('Video loaded, duration:', data.duration);
     setPlaybackProgress(prev => ({ ...prev, seekableDuration: data.duration }));
   };
-  const onVideoProgress = (data: OnProgressData) => { /* ... from previous step ... */
+  const onVideoProgress = (data: OnProgressData) => {
      setPlaybackProgress({ currentTime: data.currentTime, seekableDuration: data.seekableDuration || playbackProgress.seekableDuration });
   };
-  const onVideoError = (error: OnErrorData) => { /* ... from previous step ... */
+  const onVideoError = (error: OnErrorData) => {
     console.error('Video playback error:', error);
     const errorMessage = error.error?.localizedFailureReason || error.error?.localizedDescription || 'Unknown playback error';
     Alert.alert('Playback Error', errorMessage);
     setPlaybackError(errorMessage);
     setIsPlaying(false);
   };
-  const onVideoEnd = () => { /* ... from previous step ... */
+  const onVideoEnd = () => {
     setIsPlaying(false);
     setPlaybackProgress({ currentTime: 0, seekableDuration: 0 });
   };
 
-  if (!results) { /* ... as in previous step ... */
+  if (!results) {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size='large' color={DefaultTheme.colors.accentPrimary} />
@@ -213,7 +231,7 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
       </View>
     );
   }
-  if (results.length === 0) { /* ... as in previous step ... */
+  if (results.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.emptyText}>No results found for "{query}".</Text>
@@ -227,7 +245,6 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
   const renderMusicCard = ({ item }: { item: SearchResult }) => {
     const isCurrentlyPlayingItem = selectedTrackForPlayback?.videoId === item.videoId && isPlaying;
     const isLoadingItemPlayback = isLoadingMediaForTrackId === item.videoId;
-    // Attempt to find any download status for this item based on videoId
     const downloadKeyPrefix = `${item.videoId}_`;
     const currentDownloadStatus = Object.entries(activeDownloads).find(([key]) => key.startsWith(downloadKeyPrefix))?.[1];
 
@@ -242,11 +259,11 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
         />
         {currentDownloadStatus && (
           <View style={styles.downloadStatusContainer}>
-            {currentDownloadStatus.error && <Text style={styles.errorText}>Download Error</Text>}
+            {currentDownloadStatus.error && <Text style={styles.errorText}>Download Error: {currentDownloadStatus.error}</Text>}
             {!currentDownloadStatus.error && currentDownloadStatus.progress < 100 &&
               <Text style={styles.downloadProgressText}>Downloading: {currentDownloadStatus.progress.toFixed(0)}%</Text>}
             {!currentDownloadStatus.error && currentDownloadStatus.progress === 100 &&
-              <Text style={styles.downloadCompleteText}>Downloaded</Text>}
+              <Text style={styles.downloadCompleteText}>Downloaded ({currentDownloadStatus.path?.split('/').pop()})</Text>}
           </View>
         )}
       </View>
@@ -283,7 +300,7 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
         />
       )}
 
-      {selectedTrackForPlayback && ( <View style={styles.miniPlayer}>{/* ... same as previous step ... */
+      {selectedTrackForPlayback && ( <View style={styles.miniPlayer}>
         <View style={styles.miniPlayerInfoAndButton}>
             <View style={styles.miniPlayerInfo}>
                 <Text style={styles.miniPlayerText} numberOfLines={1}>{selectedTrackForPlayback.title}</Text>
@@ -303,13 +320,13 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
         <View style={styles.progressBarContainer}>
             <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
         </View>
-      }</View>)}
+      </View>)}
 
       <DownloadOptionsModal
         visible={isDownloadModalVisible}
         mediaInfo={mediaInfoForDownload}
         isLoading={isLoadingDownloadOptions}
-        onClose={() => { setIsDownloadModalVisible(false); /* Don't clear trackForDownload here */ }}
+        onClose={() => { setIsDownloadModalVisible(false); }}
         onSelectOption={handleSelectDownloadOption}
       />
     </View>
@@ -317,7 +334,6 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // ... All existing styles from previous step ...
   container: { flex: 1, backgroundColor: DefaultTheme.colors.backgroundPrimary },
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.md },
   listContent: { padding: Spacing.md, paddingBottom: 80 },
@@ -385,12 +401,11 @@ const styles = StyleSheet.create({
     backgroundColor: DefaultTheme.colors.accentPrimary,
     borderRadius: 2,
   },
-  // Added styles for download status
   downloadStatusContainer: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    backgroundColor: DefaultTheme.colors.backgroundTertiary, // Subtle background for status
-    marginTop: -Spacing.sm, // Overlap slightly with card bottom margin
+    backgroundColor: DefaultTheme.colors.backgroundTertiary,
+    marginTop: -Spacing.sm,
     marginBottom: Spacing.sm,
     borderRadius: BorderRadius.sm,
   },
@@ -403,10 +418,10 @@ const styles = StyleSheet.create({
     color: DefaultTheme.colors.accentPrimary,
     fontWeight: 'bold',
   },
-  errorText: { // General error text, can be used by download status too
+  errorText: {
     fontSize: Typography.fontSize.caption,
     color: DefaultTheme.colors.error,
-    textAlign: 'center',
+    // textAlign: 'center', // Not strictly needed here
   }
 });
 

@@ -1,20 +1,24 @@
 import React from 'react';
-import Icon from '../ui/Icon'; // Corrected path
+import { Link } from 'react-router-dom';
+import Icon from '../ui/Icon';
 
 const Header: React.FC = () => {
   return (
     <header className='flex items-center justify-between h-[60px] px-md bg-bg-primary border-b border-border-primary'>
-      <button aria-label='Menu' className='p-2'>
-        <Icon name='List' size={24} className='text-text-primary' />
-      </button>
-      <h1 className='text-h2 font-bold text-text-primary'>ChillyMusic</h1>
       <div className='flex items-center gap-md'>
-        <button aria-label='Toggle theme' className='p-2'>
-          <Icon name='Moon' size={24} className='text-text-primary' />
-        </button>
-        <button aria-label='Settings' className='p-2'>
-          <Icon name='Gear' size={24} className='text-text-primary' />
-        </button>
+        {/* Placeholder for future left-side icon, e.g., Menu */}
+        <div style={{width: 24}} />
+      </div>
+      <Link to="/" className='no-underline'>
+        <h1 className='text-h2 font-bold text-text-primary hover:text-accent-primary transition-colors'>ChillyMusic</h1>
+      </Link>
+      <div className='flex items-center gap-sm'> {/* Using gap-sm for slightly less space if many icons */}
+        <Link to="/library" aria-label='Library' className='p-2 text-text-primary hover:text-accent-primary transition-colors'>
+          <Icon name='Bookmark' size={24} />
+        </Link>
+        <Link to="/settings" aria-label='Settings' className='p-2 text-text-primary hover:text-accent-primary transition-colors'>
+          <Icon name='Gear' size={24} />
+        </Link>
       </div>
     </header>
   );
