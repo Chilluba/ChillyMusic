@@ -1,18 +1,20 @@
-import React, { useState, useEffect /* Removed useRef */ } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert, PermissionsAndroid, Platform } from 'react-native';
-// Removed Video import as it's now in PlaybackContext
-// @ts-ignore
-import RNFS from 'react-native-fs';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+// PermissionsAndroid and Platform are now handled by DownloadContext
+import type { RouteProp } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
 
 import { RootStackParamList } from '../navigation/types';
 import { SearchResult, MediaInfo, DownloadedMediaItem } from '../types';
 import MusicCard from '../components/cards/MusicCard';
-import { useAppTheme } from '../context/ThemeContext'; // Import AppTheme
-import { usePlayback } from '../context/PlaybackContext'; // Import PlaybackContext
-import { fetchMediaInfo, fetchDownloadLink } from '../services/apiService'; // DownloadUrlResponse removed as it's internal to apiService
-import { saveLibraryItem } from '../services/libraryStorageService';
+import { useAppTheme } from '../context/ThemeContext';
+import { usePlayback } from '../context/PlaybackContext';
+import { useDownload } from '../context/DownloadContext'; // Import useDownload
+import { fetchMediaInfo } from '../services/apiService';
+// fetchDownloadLink and saveLibraryItem are now used by DownloadContext
 import Icon from '../components/ui/Icon';
 import DownloadOptionsModal, { DownloadOption } from '../components/modals/DownloadOptionsModal';
+// RNFS is now used by DownloadContext
 
 type SearchResultsScreenRouteProp = RouteProp<RootStackParamList, 'SearchResults'>;
 type SearchResultsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SearchResults'>;
@@ -22,123 +24,100 @@ interface Props {
   navigation: SearchResultsScreenNavigationProp;
 }
 
-// PlaybackProgress interface is now in PlaybackContext via PlaybackProgressState
-
 const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
   const { results, query } = route.params;
   const { theme } = useAppTheme();
-  const playback = usePlayback(); // Use PlaybackContext
+  const playback = usePlayback();
+  const downloadContext = useDownload();
 
-  // Local state for this screen (download modal, download progress) remains
   const [isDownloadModalVisible, setIsDownloadModalVisible] = useState(false);
-  const [trackForDownload, setTrackForDownload] = useState<SearchResult | null>(null);
-  const [mediaInfoForDownload, setMediaInfoForDownload] = useState<MediaInfo | null>(null);
-  const [isLoadingDownloadOptions, setIsLoadingDownloadOptions] = useState(false);
-  const [activeDownloads, setActiveDownloads] = useState<{[key: string]: {progress: number, jobId?: number, error?: string, path?: string}}>({});
+  const [trackForDownloadModal, setTrackForDownloadModal] = useState<SearchResult | null>(null);
+  const [mediaInfoForModal, setMediaInfoForModal] = useState<MediaInfo | null>(null);
+  const [isLoadingDLOptsModal, setIsLoadingDLOptsModal] = useState(false);
 
-  // REMOVED: selectedTrackForPlayback, streamUrl, isPlaying, isLoadingMediaForTrackId, playbackError, playbackProgress, videoPlayerRef
+  // REMOVED: local activeDownloads state and requestStoragePermission function.
 
-  // Download related functions remain the same
-  const openDownloadOptions = async (track: SearchResult) => { /* ... existing implementation ... */
-    setTrackForDownload(track);
+  const openDownloadOptions = async (track: SearchResult) => {
+    setTrackForDownloadModal(track);
     setIsDownloadModalVisible(true);
-    if (mediaInfoForDownload?.videoId === track.videoId || playback.currentTrack?.videoId === track.videoId && mediaInfoForDownload?.videoId === playback.currentTrack.videoId) {
-      // If mediaInfo for this track is already cached (either for download or from playback context)
-      // For playback context, we'd need to expose mediaInfo or selected formats from it if needed by DownloadOptionsModal.
-      // For now, assume mediaInfoForDownload is the primary cache for modal.
-      setIsLoadingDownloadOptions(false);
+    if (mediaInfoForModal?.videoId === track.videoId) {
+      setIsLoadingDLOptsModal(false);
       return;
     }
-    setIsLoadingDownloadOptions(true);
+    setIsLoadingDLOptsModal(true);
     try {
       const info = await fetchMediaInfo(track.videoId);
-      setMediaInfoForDownload(info);
+      setMediaInfoForModal(info);
     } catch (error: any) {
       Alert.alert('Error', 'Could not fetch download options.');
-      setMediaInfoForDownload(null);
+      console.error('SearchResults: Error fetching media info for download options:', error);
+      setMediaInfoForModal(null);
     } finally {
-      setIsLoadingDownloadOptions(false);
+      setIsLoadingDLOptsModal(false);
     }
   };
-  const handleSelectDownloadOption = async (option: DownloadOption) => { /* ... existing implementation, ensure saveLibraryItem is awaited ... */
+
+  const handleSelectDownloadOption = async (option: DownloadOption) => {
     setIsDownloadModalVisible(false);
-    if (!trackForDownload) return;
+    if (!trackForDownloadModal) return;
 
-    const hasPermission = await requestStoragePermission();
-    if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Storage permission is required to download files.');
-      return;
-    }
+    // Call startDownload from DownloadContext
+    // Pass mediaInfoForModal which contains full format details and duration for DownloadedMediaItem creation
+    await downloadContext.startDownload(trackForDownloadModal, option, mediaInfoForModal);
 
-    const currentTrack = trackForDownload;
-    const downloadKey = `${currentTrack.videoId}_${option.format}_${option.quality}`;
-    setActiveDownloads(prev => ({ ...prev, [downloadKey]: { progress: 0, error: undefined, path: undefined } }));
-
-    try {
-      Alert.alert('Download Starting', `Preparing to download: ${currentTrack.title} (${option.label})`);
-      const downloadPayload = { videoId: currentTrack.videoId, format: option.format, quality: option.quality };
-      const { downloadUrl, fileName: suggestedFileName } = await fetchDownloadLink(downloadPayload);
-      const safeTitle = currentTrack.title.replace(/[^a-zA-Z0-9\s-_]/g, '').replace(/\s+/g, '_');
-      const extension = option.format === 'mp3' ? 'mp3' : 'mp4';
-      const fileName = suggestedFileName || `${safeTitle}_${option.quality}.${extension}`;
-      const destPath = `${Platform.OS === 'ios' ? RNFS.DocumentDirectoryPath : RNFS.DownloadDirectoryPath}/${fileName}`;
-
-      const download = RNFS.downloadFile({
-        fromUrl: downloadUrl, toFile: destPath, background: true, progressDivider: 10,
-        begin: (res) => setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], jobId: res.jobId, progress: 0 }})),
-        progress: (res) => setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], progress: (res.bytesWritten / res.contentLength) * 100 }})),
-      });
-      setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], jobId: download.jobId } }));
-      const result = await download.promise;
-
-      if (result.statusCode === 200) {
-        Alert.alert('Download Complete', `${currentTrack.title} downloaded successfully to ${destPath}!`);
-        setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], progress: 100, path: destPath } }));
-        const libraryItemData: DownloadedMediaItem = {
-          id: `${currentTrack.videoId}_${option.format}_${option.quality}`,
-          videoId: currentTrack.videoId, title: currentTrack.title, channel: currentTrack.channel,
-          filePath: destPath, thumbnail: currentTrack.thumbnail, downloadedAt: new Date().toISOString(),
-          format: option.format, quality: option.quality, duration: mediaInfoForDownload?.duration,
-        };
-        await saveLibraryItem(libraryItemData);
-      } else { throw new Error(`Download failed: Status ${result.statusCode}`); }
-    } catch (error: any) {
-      Alert.alert('Download Error', `Could not download ${currentTrack.title}: ${error.message}`);
-      setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], error: error.message, progress: -1 } }));
-    }
-  };
-  const requestStoragePermission = async (): Promise<boolean> => { /* ... existing ... */
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request( PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          { title: 'Storage Permission', message: 'App needs access to your storage to download files.', buttonPositive: 'OK', },
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) { console.warn(err); return false; }
-    } return true;
+    setTrackForDownloadModal(null);
+    setMediaInfoForModal(null); // Clear after initiating
   };
 
-  // REMOVED: onVideoLoad, onVideoProgress, onVideoError, onVideoEnd (handled by context)
+  // REMOVED: requestStoragePermission (now in DownloadContext)
 
-  if (!results) { /* ... loading/empty states ... */ }
-  if (results.length === 0 && query) { /* ... */ }
+  if (!results) {
+    return ( <View style={[styles.container, styles.centerContent]}><ActivityIndicator size='large' color={theme.colors.accentPrimary} /><Text style={styles.emptyText}>Loading results...</Text></View> );
+  }
+  if (results.length === 0 && query) {
+    return ( <View style={[styles.container, styles.centerContent]}><Text style={styles.emptyText}>No results found for "{query}".</Text><TouchableOpacity onPress={() => navigation.goBack()} style={styles.goBackButton}><Text style={styles.goBackButtonText}>Try another search</Text></TouchableOpacity></View> );
+  }
 
   const renderMusicCard = ({ item }: { item: SearchResult }) => {
     const isCurrentlyPlayingItem = playback.currentTrack?.videoId === item.videoId && playback.isPlaying;
     const isLoadingItemPlayback = playback.isLoading && playback.currentTrack?.videoId === item.videoId;
-    const downloadKeyPrefix = `${item.videoId}_`;
-    const currentDownloadStatus = Object.entries(activeDownloads).find(([key]) => key.startsWith(downloadKeyPrefix))?.[1];
+
+    // Find download status from context
+    // Construct potential keys or iterate. For now, iterate as keys are composite.
+    const activeDownloadEntry = Object.values(downloadContext.activeDownloads).find(
+      dl => dl.itemMetadata?.videoId === item.videoId
+    );
 
     return (
       <View>
         <MusicCard
           item={item}
-          onPlayPause={() => playback.playTrack(item)} // Use context's playTrack
+          onPlayPause={() => playback.playTrack(item)}
           isPlaying={isCurrentlyPlayingItem}
           isLoading={isLoadingItemPlayback}
           onDownloadMp3={() => openDownloadOptions(item)}
         />
-        {currentDownloadStatus && ( /* ... download status display ... */ )}
+        {activeDownloadEntry && (
+          <View style={styles.downloadStatusContainer}>
+            {activeDownloadEntry.error ? (
+              <Text style={[styles.downloadStatusText, { color: theme.colors.error }]}>Download Error</Text>
+            ) : activeDownloadEntry.progress < 100 ? (
+              <>
+                <Text style={[styles.downloadStatusText, { color: theme.colors.accentSecondary }]}>
+                  Downloading: {activeDownloadEntry.progress.toFixed(0)}%
+                  {activeDownloadEntry.itemMetadata ? ` (${activeDownloadEntry.itemMetadata.format}, ${activeDownloadEntry.itemMetadata.quality})` : ''}
+                </Text>
+                <View style={styles.itemProgressBarOuter}>
+                  <View style={[styles.itemProgressBarInner, { width: `${activeDownloadEntry.progress}%` }]} />
+                </View>
+              </>
+            ) : ( // progress === 100
+              <Text style={[styles.downloadStatusText, { color: theme.colors.accentPrimary }]}>
+                Downloaded {activeDownloadEntry.itemMetadata ? `(${activeDownloadEntry.itemMetadata.format} - ${activeDownloadEntry.itemMetadata.quality})` : ''}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
     );
   };
@@ -147,7 +126,7 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
     ? (playback.progress.currentTime / playback.progress.seekableDuration) * 100
     : 0;
 
-  const styles = StyleSheet.create({ /* Styles use theme from useAppTheme() */
+  const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.backgroundPrimary },
     listContent: { padding: theme.spacing.md, paddingBottom: playback.currentTrack ? 80 + theme.spacing.md : theme.spacing.md },
     miniPlayerTouchableWrapper: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10 },
@@ -158,15 +137,16 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
     miniPlayerArtist: { color: theme.colors.textSecondary, fontSize: theme.typography.fontSize.caption, fontFamily: theme.typography.fontFamily.primary },
     miniPlayerError: { color: theme.colors.error, fontSize: theme.typography.fontSize.caption, fontStyle: 'italic', fontFamily: theme.typography.fontFamily.primary },
     miniPlayerButton: { padding: theme.spacing.xs, },
-    progressBarContainer: { height: 4, backgroundColor: theme.colors.backgroundTertiary, borderRadius: theme.borderRadius.xs, overflow: 'hidden',},
-    progressBar: { height: '100%', backgroundColor: theme.colors.accentPrimary, borderRadius: theme.borderRadius.xs, },
+    progressBarContainerMini: { height: 4, backgroundColor: theme.colors.backgroundTertiary, borderRadius: theme.borderRadius.xs, overflow: 'hidden',},
+    progressBarMini: { height: '100%', backgroundColor: theme.colors.accentPrimary, borderRadius: theme.borderRadius.xs, },
     emptyText: { fontSize: theme.typography.fontSize.bodyLarge, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: theme.spacing.md },
     centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.spacing.md, backgroundColor: theme.colors.backgroundPrimary },
     goBackButton: { backgroundColor: theme.colors.accentPrimary, paddingVertical: theme.spacing.sm, paddingHorizontal: theme.spacing.lg, borderRadius: theme.borderRadius.sm, marginTop: theme.spacing.md, },
     goBackButtonText: { color: theme.colors.white, fontSize: theme.typography.fontSize.bodyLarge, fontWeight: theme.typography.fontWeight.medium as any, fontFamily: theme.typography.fontFamily.primary },
-    downloadStatusContainer: { paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.xs, backgroundColor: theme.colors.backgroundTertiary, marginTop: -theme.spacing.sm, marginBottom: theme.spacing.sm, borderRadius: theme.borderRadius.sm, },
-    downloadProgressText: { fontSize: theme.typography.fontSize.caption, color: theme.colors.accentSecondary, fontFamily: theme.typography.fontFamily.primary },
-    downloadCompleteText: { fontSize: theme.typography.fontSize.caption, color: theme.colors.accentPrimary, fontWeight: theme.typography.fontWeight.bold as any, fontFamily: theme.typography.fontFamily.primary },
+    downloadStatusContainer: { paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.xs, backgroundColor: theme.colors.backgroundTertiary, marginTop: -theme.spacing.sm + theme.spacing.xs, marginBottom: theme.spacing.sm, borderRadius: theme.borderRadius.sm, },
+    downloadStatusText: { fontSize: theme.typography.fontSize.caption, marginBottom: theme.spacing.xs / 2, fontFamily: theme.typography.fontFamily.primary },
+    itemProgressBarOuter: { height: 6, backgroundColor: theme.colors.border, borderRadius: 3, overflow: 'hidden', }, // Changed to border for better contrast
+    itemProgressBarInner: { height: '100%', backgroundColor: theme.colors.accentSecondary, borderRadius: 3, },
     errorText: { fontSize: theme.typography.fontSize.caption, color: theme.colors.error, fontFamily: theme.typography.fontFamily.primary },
   });
 
@@ -180,11 +160,10 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Mini Player UI using PlaybackContext */}
       {playback.currentTrack && (
         <TouchableOpacity
             style={styles.miniPlayerTouchableWrapper}
-            onPress={() => navigation.navigate('Player')} // Navigate without params
+            onPress={() => navigation.navigate('Player')}
         >
             <View style={styles.miniPlayer}>
                 <View style={styles.miniPlayerInfoAndButton}>
@@ -196,15 +175,14 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
                         )}
                     </View>
                     <TouchableOpacity onPress={playback.togglePlayPause} style={styles.miniPlayerButton}>
-                        {playback.isLoading && playback.currentTrack?.videoId === playback.currentTrack.videoId ? ( // check if loading THIS track
+                        {(playback.isLoading && playback.currentTrack?.videoId === playback.currentTrack.videoId) ?
                           <ActivityIndicator size='small' color={theme.colors.textPrimary} />
-                        ) : (
-                          <Icon name={playback.isPlaying ? 'Pause' : 'Play'} size={28} color={theme.colors.textPrimary} />
-                        )}
+                         : <Icon name={playback.isPlaying ? 'Pause' : 'Play'} size={28} color={theme.colors.textPrimary} />
+                        }
                     </TouchableOpacity>
                 </View>
-                <View style={styles.progressBarContainer}>
-                    <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
+                <View style={styles.progressBarContainerMini}>
+                    <View style={[styles.progressBarMini, { width: `${progressPercent}%` }]} />
                 </View>
             </View>
         </TouchableOpacity>
@@ -212,9 +190,9 @@ const SearchResultsScreen: React.FC<Props> = ({ route, navigation }) => {
 
       <DownloadOptionsModal
         visible={isDownloadModalVisible}
-        mediaInfo={mediaInfoForDownload}
-        isLoading={isLoadingDownloadOptions}
-        onClose={() => { setIsDownloadModalVisible(false); setTrackForDownload(null);}}
+        mediaInfo={mediaInfoForModal}
+        isLoading={isLoadingDLOptsModal}
+        onClose={() => { setIsDownloadModalVisible(false); setTrackForDownloadModal(null); setMediaInfoForModal(null);}}
         onSelectOption={handleSelectDownloadOption}
       />
     </View>

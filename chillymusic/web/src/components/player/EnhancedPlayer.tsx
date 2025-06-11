@@ -1,4 +1,4 @@
-import React, { useState, useEffect, MouseEvent } from 'react';
+import React, { useState, MouseEvent, ChangeEvent, useEffect } from 'react'; // Added ChangeEvent, useEffect
 import Icon from '../ui/Icon';
 import { useWebPlayback } from '../../context/PlaybackContext';
 import DownloadOptionsPopover, { DownloadOption } from '../modals/DownloadOptionsPopover';
@@ -19,7 +19,7 @@ const EnhancedPlayer: React.FC<EnhancedPlayerProps> = ({ onCloseProp }) => {
     error: playbackError,
     togglePlayPause,
     clearPlayer,
-    // seekTo
+    seekTo
   } = useWebPlayback();
 
   const [downloadPopoverAnchor, setDownloadPopoverAnchor] = useState<HTMLElement | null>(null);
@@ -28,21 +28,29 @@ const EnhancedPlayer: React.FC<EnhancedPlayerProps> = ({ onCloseProp }) => {
   const [isInitiatingDownload, setIsInitiatingDownload] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
+  // Local state for slider value to allow smooth dragging
+  const [sliderValue, setSliderValue] = useState<number>(0);
+  const [isSeeking, setIsSeeking] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isSeeking) {
+      setSliderValue(progress.currentTime);
+    }
+  }, [progress.currentTime, isSeeking]);
+
   const formatTime = (seconds: number): string => {
     if (isNaN(seconds) || seconds < 0) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
-  const progressPercent = progress.seekableDuration > 0 ? (progress.currentTime / progress.seekableDuration) * 100 : 0;
 
-  const handleOpenDownloadOptions = async (event: MouseEvent<HTMLButtonElement>) => {
+  const handleOpenDownloadOptions = async (event: MouseEvent<HTMLButtonElement>) => { /* ... from previous step ... */
     if (!currentTrack) return;
     setDownloadPopoverAnchor(event.currentTarget);
     setIsLoadingDownloadOpts(true);
     setDownloadError(null);
     try {
-      // Use cached mediaInfo if available and for the same track, otherwise fetch
       if (mediaInfoForDownloadOpts?.videoId === currentTrack.videoId) {
           setIsLoadingDownloadOpts(false);
           return;
@@ -50,27 +58,20 @@ const EnhancedPlayer: React.FC<EnhancedPlayerProps> = ({ onCloseProp }) => {
       const info = await fetchMediaInfo(currentTrack.videoId);
       setMediaInfoForDownloadOpts(info);
     } catch (error: any) {
-      console.error('EnhancedPlayer: Error fetching media info for download options:', error);
       setMediaInfoForDownloadOpts(null);
-      setDownloadError('Could not fetch download options.'); // Set specific error for download UI
+      setDownloadError('Could not fetch download options.');
     } finally {
       setIsLoadingDownloadOpts(false);
     }
   };
-
-  const handleSelectDownloadOption = async (option: DownloadOption) => {
+  const handleSelectDownloadOption = async (option: DownloadOption) => { /* ... from previous step ... */
     setDownloadPopoverAnchor(null);
     if (!currentTrack) return;
-
     setIsInitiatingDownload(true);
     setDownloadError(null);
-    console.log(`EnhancedPlayer: Download selected for ${currentTrack.title}: ${option.label}`);
-
     try {
       const { downloadUrl, fileName: suggestedFileName } = await fetchDownloadLink({
-        videoId: currentTrack.videoId,
-        format: option.format,
-        quality: option.quality,
+        videoId: currentTrack.videoId, format: option.format, quality: option.quality,
       });
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -80,7 +81,6 @@ const EnhancedPlayer: React.FC<EnhancedPlayerProps> = ({ onCloseProp }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       const libraryItemData: WebLibraryItem = {
         id: `${currentTrack.videoId}_${option.format}_${option.quality}`,
         videoId: currentTrack.videoId, title: currentTrack.title, channel: 'channel' in currentTrack ? currentTrack.channel : undefined,
@@ -88,19 +88,28 @@ const EnhancedPlayer: React.FC<EnhancedPlayerProps> = ({ onCloseProp }) => {
         format: option.format, quality: option.quality, originalDownloadUrl: downloadUrl, fileName: link.download,
       };
       saveWebLibraryItem(libraryItemData);
-
     } catch (error: any) {
-      console.error('EnhancedPlayer: Download initiation error:', error);
       setDownloadError(error.message || 'Failed to start download.');
     } finally {
       setIsInitiatingDownload(false);
     }
   };
-
-  const handleClosePlayer = () => {
+  const handleClosePlayer = () => { /* ... from previous step ... */
     clearPlayer();
     if (onCloseProp) onCloseProp();
   };
+
+  const handleSeekChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setIsSeeking(true);
+    setSliderValue(parseFloat(event.target.value));
+  };
+
+  const handleSeekComplete = (event: MouseEvent<HTMLInputElement> | ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(event.currentTarget.value);
+    seekTo(time);
+    setIsSeeking(false);
+  };
+
 
   if (!currentTrack) return null;
 
@@ -123,8 +132,31 @@ const EnhancedPlayer: React.FC<EnhancedPlayerProps> = ({ onCloseProp }) => {
             {downloadError && <p className='text-xs text-error-primary dark:text-dark-error-primary mt-1 truncate' title={downloadError}>Download Error: {downloadError}</p>}
 
             <div className='mt-xs md:mt-sm'>
-              <div className='h-1.5 bg-bg-tertiary dark:bg-dark-bg-tertiary rounded-full w-full'><div className='h-full bg-accent-primary dark:bg-dark-accent-primary rounded-full transition-all duration-200 ease-linear' style={{ width: `${progressPercent}%` }} /></div>
-              <div className='flex justify-between text-xs text-text-muted dark:text-dark-text-muted mt-1'><span>{formatTime(progress.currentTime)}</span><span>{formatTime(progress.seekableDuration)}</span></div>
+              <input
+                type='range'
+                min='0'
+                max={progress.seekableDuration > 0 ? progress.seekableDuration : 100}
+                value={sliderValue} // Use local sliderValue for smoother dragging
+                onInput={handleSeekChange} // Update sliderValue while dragging
+                onChange={handleSeekComplete} // Final seek on change (mouseup)
+                disabled={isLoadingPlayback || progress.seekableDuration === 0 || !!playbackError}
+                className='w-full h-1.5 bg-bg-tertiary dark:bg-dark-bg-tertiary rounded-full appearance-none cursor-pointer accent-accent-primary dark:accent-dark-accent-primary
+                           focus:outline-none focus:ring-2 focus:ring-accent-primary/50 dark:focus:ring-dark-accent-primary/50
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           [&::-webkit-slider-thumb]:appearance-none
+                           [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+                           [&::-webkit-slider-thumb]:bg-accent-primary [&::-webkit-slider-thumb]:dark:bg-dark-accent-primary
+                           [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-bg-secondary [&::-webkit-slider-thumb]:dark:border-dark-bg-secondary
+                           [&::-webkit-slider-thumb]:shadow
+                           [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5
+                           [&::-moz-range-thumb]:bg-accent-primary [&::-moz-range-thumb]:dark:bg-dark-accent-primary
+                           [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-bg-secondary [&::-moz-range-thumb]:dark:border-dark-bg-secondary
+                           [&::-moz-range-thumb]:shadow'
+              />
+              <div className='flex justify-between text-xs text-text-muted dark:text-dark-text-muted mt-1'>
+                <span>{formatTime(sliderValue)}</span> {/* Display sliderValue for immediate feedback */}
+                <span>{formatTime(progress.seekableDuration)}</span>
+              </div>
             </div>
           </div>
           <div className='flex items-center pl-sm md:pl-md ml-auto flex-shrink-0 self-center'>
@@ -150,7 +182,7 @@ const EnhancedPlayer: React.FC<EnhancedPlayerProps> = ({ onCloseProp }) => {
           anchorElement={downloadPopoverAnchor}
           mediaInfo={mediaInfoForDownloadOpts}
           isLoading={isLoadingDownloadOpts}
-          onClose={() => { setDownloadPopoverAnchor(null); /* setMediaInfoForDownloadOpts(null); */ setDownloadError(null); }}
+          onClose={() => { setDownloadPopoverAnchor(null); setMediaInfoForDownloadOpts(null); setDownloadError(null); }}
           onSelectOption={handleSelectDownloadOption}
         />
       )}

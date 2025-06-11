@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { StatusBar, StyleSheet, LogBox, View, ScrollView, ActivityIndicator } from 'react-native'; // Removed useColorScheme
+import { StatusBar, StyleSheet, LogBox, View, ScrollView, ActivityIndicator } from 'react-native';
 import { NavigationContainer, DefaultTheme as NavigationDefaultTheme, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import type { StackNavigationProp } from '@react-navigation/stack';
 
 import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
-import { PlaybackProvider } from './src/context/PlaybackContext'; // Import PlaybackProvider
+import { PlaybackProvider } from './src/context/PlaybackContext';
+import { DownloadProvider } from './src/context/DownloadContext'; // Import DownloadProvider
 
 import SearchInput from './src/components/ui/SearchInput';
 import RecentSearches from './src/components/feature/RecentSearches';
@@ -16,8 +17,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import PlayerScreen from './src/screens/PlayerScreen';
 import HeaderComponent from './src/components/layout/Header';
 
-import { DefaultTheme as AppDefaultThemeConfig, Spacing, Typography } from './src/theme/theme'; // Renamed to avoid conflict
-// import { SearchResult } from './src/types'; // Not directly used in App.tsx
+import { DefaultTheme as AppDefaultThemeConfig, Spacing, Typography } from './src/theme/theme';
 import { RootStackParamList } from './src/navigation/types';
 
 LogBox.ignoreLogs([
@@ -30,7 +30,7 @@ type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 const StatefulHomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { theme } = useAppTheme(); // Use theme for styling
+  const { theme } = useAppTheme();
 
   const performSearch = async (query: string) => {
     if (!query.trim()) return;
@@ -47,9 +47,9 @@ const StatefulHomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = (
   };
 
   const styles = StyleSheet.create({
-    scrollView: { flex: 1, backgroundColor: theme.colors.backgroundPrimary }, // Use theme
-    scrollContentContainer: { paddingBottom: theme.spacing.md, }, // Use theme
-    loadingIndicator: { marginTop: theme.spacing.md } // Use theme
+    scrollView: { flex: 1, backgroundColor: theme.colors.backgroundPrimary },
+    scrollContentContainer: { paddingBottom: theme.spacing.md, },
+    loadingIndicator: { marginTop: theme.spacing.md }
   });
 
   return (
@@ -147,8 +147,10 @@ const AppContent: React.FC = () => {
 const App = () => {
   return (
     <ThemeProvider>
-      <PlaybackProvider> {/* Wrap AppContent (which contains Navigation) with PlaybackProvider */}
-        <AppContent />
+      <PlaybackProvider>
+        <DownloadProvider> {/* Wrap AppContent with DownloadProvider */}
+          <AppContent />
+        </DownloadProvider>
       </PlaybackProvider>
     </ThemeProvider>
   );

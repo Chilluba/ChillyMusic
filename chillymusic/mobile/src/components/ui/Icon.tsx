@@ -27,7 +27,8 @@ const iconMap: Record<string, string> = {
   SkipForward: '⏭️',
   Repeat: '🔁',
   Heart: '❤️',
-  PlaylistAdd: '➕🎶', // This might render poorly if system doesn't combine emojis well. Consider separate icons or a single character.
+  PlaylistAdd: '➕🎶',
+  Check: '✓', // Added Check icon
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {
