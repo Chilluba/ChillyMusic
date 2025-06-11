@@ -1,24 +1,22 @@
 import React from 'react';
 import { MediaInfo, MediaFormatDetails } from '../../types';
-import Icon from '../ui/Icon'; // Assuming Icon component exists
+import Icon from '../ui/Icon';
 
-// User-friendly download option structure (similar to mobile)
 export interface DownloadOption {
   label: string;
   format: 'mp3' | 'mp4';
   quality: string;
   formatDetails?: MediaFormatDetails;
 }
-
 interface DownloadOptionsPopoverProps {
   mediaInfo: MediaInfo | null;
   isLoading: boolean;
   onSelectOption: (option: DownloadOption) => void;
-  onClose: () => void; // For closing the popover/modal
-  anchorElement: HTMLElement | null; // For positioning a popover
+  onClose: () => void;
+  anchorElement: HTMLElement | null;
 }
 
-// Helper to generate download options (similar to mobile's generateDownloadOptions)
+// Using the more complete generateDownloadOptions from subtask 17
 const generateDownloadOptions = (mediaInfo: MediaInfo | null): DownloadOption[] => {
   if (!mediaInfo?.formats) return [];
   const options: DownloadOption[] = [];
@@ -81,6 +79,7 @@ const generateDownloadOptions = (mediaInfo: MediaInfo | null): DownloadOption[] 
   });
 };
 
+
 const DownloadOptionsPopover: React.FC<DownloadOptionsPopoverProps> = ({
   mediaInfo,
   isLoading,
@@ -89,54 +88,38 @@ const DownloadOptionsPopover: React.FC<DownloadOptionsPopoverProps> = ({
   anchorElement,
 }) => {
   const downloadOptions = React.useMemo(() => generateDownloadOptions(mediaInfo), [mediaInfo]);
-
   if (!anchorElement) return null;
 
   const rect = anchorElement.getBoundingClientRect();
   const style: React.CSSProperties = {
     position: 'absolute',
-    top: rect.bottom + window.scrollY + 8, // Position below the anchor
-    left: rect.left + window.scrollX,
+    top: rect.bottom + window.scrollY + 8,
+    left: Math.max(8, rect.left + window.scrollX - 100), // Adjust left to prevent overflow if too close to edge
     zIndex: 1000,
   };
 
   return (
-    // Basic popover structure; a proper library like Headless UI or Popper.js would be better.
-    // Adding a backdrop to close on click outside.
     <>
-      <div className='fixed inset-0 bg-black/10 z-[999]' onClick={onClose} />
-      <div style={style} className='bg-bg-tertiary text-text-primary rounded-md shadow-xl border border-border-primary min-w-[250px] max-h-[300px] overflow-y-auto p-sm'>
+      <div className='fixed inset-0 bg-black/30 dark:bg-black/50 z-[999]' onClick={onClose} />
+      <div style={style} className='bg-bg-tertiary text-text-primary dark:bg-dark-bg-tertiary dark:text-dark-text-primary
+                                 rounded-md shadow-xl border border-border-primary dark:border-dark-border-primary
+                                 min-w-[250px] max-w-xs max-h-[300px] overflow-y-auto p-sm'>
         <div className='flex justify-between items-center mb-xs'>
-          <h3 className='text-lg font-semibold'>Download Options</h3>
-          <button onClick={onClose} className='p-1 rounded hover:bg-bg-primary'>
-            <Icon name='Close' size={20} />
+          <h3 className='text-lg font-semibold text-text-primary dark:text-dark-text-primary'>Download Options</h3>
+          <button onClick={onClose} className='p-1 rounded hover:bg-bg-primary dark:hover:bg-dark-bg-primary'>
+            <Icon name='Close' size={20} className='text-text-muted dark:text-dark-text-muted hover:text-text-primary dark:hover:text-dark-text-primary' />
           </button>
         </div>
-        {isLoading && (
-          <div className='flex justify-center items-center py-lg'>
-            <svg className='animate-spin h-6 w-6 text-accent-primary' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-              <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
-            </svg>
-          </div>
-        )}
-        {!isLoading && downloadOptions.length === 0 && (
-          <p className='text-text-secondary py-md text-center'>No download options found.</p>
-        )}
+        {isLoading && ( <div className='flex justify-center items-center py-lg'><svg className='animate-spin h-6 w-6 text-accent-primary dark:text-dark-accent-primary' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' className='opacity-25'></circle><path d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' className='opacity-75' fill='currentColor'></path></svg></div> )}
+        {!isLoading && downloadOptions.length === 0 && ( <p className='text-text-secondary dark:text-dark-text-secondary py-md text-center'>No download options found.</p> )}
         {!isLoading && downloadOptions.length > 0 && (
-          <ul className='divide-y divide-border-primary'>
+          <ul className='divide-y divide-border-primary dark:divide-dark-border-primary'>
             {downloadOptions.map(option => (
               <li key={option.label}>
-                <button
-                  onClick={() => onSelectOption(option)}
-                  className='w-full text-left px-xs py-sm hover:bg-bg-primary rounded flex justify-between items-center'
-                >
+                <button onClick={() => onSelectOption(option)}
+                        className='w-full text-left px-xs py-sm hover:bg-bg-primary dark:hover:bg-dark-bg-primary rounded flex justify-between items-center text-text-primary dark:text-dark-text-primary'>
                   <span>{option.label}</span>
-                  {option.formatDetails?.filesize ? (
-                    <span className='text-xs text-text-muted'>
-                      (~{(option.formatDetails.filesize / 1024 / 1024).toFixed(1)} MB)
-                    </span>
-                  ) : null}
+                  {option.formatDetails?.filesize ? ( <span className='text-xs text-text-muted dark:text-dark-text-muted'> (~{(option.formatDetails.filesize / 1024 / 1024).toFixed(1)} MB) </span> ) : null}
                 </button>
               </li>
             ))}
@@ -146,5 +129,4 @@ const DownloadOptionsPopover: React.FC<DownloadOptionsPopoverProps> = ({
     </>
   );
 };
-
 export default DownloadOptionsPopover;

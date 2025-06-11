@@ -1,10 +1,11 @@
-import React, { useState } from 'react'; // Keep useState for StatefulHomeScreen
-import { StatusBar, StyleSheet, LogBox, View, ScrollView, ActivityIndicator, useColorScheme } from 'react-native';
+import React, { useState } from 'react';
+import { StatusBar, StyleSheet, LogBox, View, ScrollView, ActivityIndicator } from 'react-native'; // Removed useColorScheme
 import { NavigationContainer, DefaultTheme as NavigationDefaultTheme, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import type { StackNavigationProp } from '@react-navigation/stack';
 
-import { ThemeProvider, useAppTheme, AppTheme } from './src/context/ThemeContext'; // Import provider and hook
+import { ThemeProvider, useAppTheme } from './src/context/ThemeContext';
+import { PlaybackProvider } from './src/context/PlaybackContext'; // Import PlaybackProvider
 
 import SearchInput from './src/components/ui/SearchInput';
 import RecentSearches from './src/components/feature/RecentSearches';
@@ -12,10 +13,10 @@ import TrendingNow from './src/components/feature/TrendingNow';
 import SearchResultsScreen from './src/screens/SearchResultsScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import PlayerScreen from './src/screens/PlayerScreen'; // Import PlayerScreen
+import PlayerScreen from './src/screens/PlayerScreen';
 import HeaderComponent from './src/components/layout/Header';
 
-import { DefaultTheme as AppDefaultTheme, Spacing, Typography, Colors } from './src/theme/theme'; // Import Colors for nav theme
+import { DefaultTheme as AppDefaultThemeConfig, Spacing, Typography } from './src/theme/theme'; // Renamed to avoid conflict
 // import { SearchResult } from './src/types'; // Not directly used in App.tsx
 import { RootStackParamList } from './src/navigation/types';
 
@@ -27,11 +28,9 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
-// StatefulHomeScreen remains the same as it doesn't directly consume the AppTheme for its own styles yet
-// It would be refactored in a subsequent step if its internal styles needed to be dynamic.
 const StatefulHomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
-  // const { theme } = useAppTheme(); // Example if StatefulHomeScreen needed theme
+  const { theme } = useAppTheme(); // Use theme for styling
 
   const performSearch = async (query: string) => {
     if (!query.trim()) return;
@@ -47,14 +46,11 @@ const StatefulHomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = (
     }
   };
 
-  // Styles for StatefulHomeScreen would also adapt to theme if it had themed elements
-  // For now, assuming its internal styles are compatible or use DefaultTheme from theme.ts
   const styles = StyleSheet.create({
-    scrollView: { flex: 1, backgroundColor: AppDefaultTheme.colors.backgroundPrimary },
-    scrollContentContainer: { paddingBottom: Spacing.md, },
-    loadingIndicator: { marginTop: Spacing.md }
+    scrollView: { flex: 1, backgroundColor: theme.colors.backgroundPrimary }, // Use theme
+    scrollContentContainer: { paddingBottom: theme.spacing.md, }, // Use theme
+    loadingIndicator: { marginTop: theme.spacing.md } // Use theme
   });
-
 
   return (
     <ScrollView
@@ -67,19 +63,16 @@ const StatefulHomeScreen: React.FC<{ navigation: HomeScreenNavigationProp }> = (
         onSearchSubmit={performSearch}
         isLoading={isLoading}
       />
-      {isLoading && <ActivityIndicator style={styles.loadingIndicator} size='large' color={AppDefaultTheme.colors.accentPrimary}/>}
+      {isLoading && <ActivityIndicator style={styles.loadingIndicator} size='large' color={theme.colors.accentPrimary}/>}
       <RecentSearches />
       <TrendingNow />
     </ScrollView>
   );
 };
 
-
-// New component to access theme context for NavigationContainer and StatusBar
 const AppContent: React.FC = () => {
   const { theme } = useAppTheme();
 
-  // Adapt React Navigation theme based on AppTheme
   const navigationTheme = {
     ...(theme.isDark ? NavigationDarkTheme : NavigationDefaultTheme),
     colors: {
@@ -116,26 +109,26 @@ const AppContent: React.FC = () => {
       >
         <Stack.Screen
           name="Home"
-          component={StatefulHomeScreen} // StatefulHomeScreen itself is not yet theme-aware in its styles
+          component={StatefulHomeScreen}
           options={{
-            header: (props) => <HeaderComponent {...props} />, // HeaderComponent will need to use useAppTheme
+            header: (props) => <HeaderComponent {...props} />,
           }}
         />
         <Stack.Screen
           name="SearchResults"
-          component={SearchResultsScreen} // Will need to use useAppTheme
+          component={SearchResultsScreen}
           options={({ route }) => ({
             title: route.params.query ? `Results: ${route.params.query}` : 'Search Results',
           })}
         />
         <Stack.Screen
           name="Library"
-          component={LibraryScreen} // Will need to use useAppTheme
+          component={LibraryScreen}
           options={{ title: 'My Library' }}
         />
         <Stack.Screen
           name="Settings"
-          component={SettingsScreen} // Already updated to use useAppTheme
+          component={SettingsScreen}
           options={{ title: 'Settings' }}
         />
         <Stack.Screen
@@ -144,7 +137,6 @@ const AppContent: React.FC = () => {
           options={{
             title: 'Now Playing',
             headerBackTitleVisible: false,
-            // presentation: 'modal', // Optional: for modal presentation
           }}
         />
       </Stack.Navigator>
@@ -152,11 +144,12 @@ const AppContent: React.FC = () => {
   );
 }
 
-
 const App = () => {
   return (
     <ThemeProvider>
-      <AppContent />
+      <PlaybackProvider> {/* Wrap AppContent (which contains Navigation) with PlaybackProvider */}
+        <AppContent />
+      </PlaybackProvider>
     </ThemeProvider>
   );
 };

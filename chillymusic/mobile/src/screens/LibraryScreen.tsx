@@ -1,112 +1,52 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-// @ts-ignore
-import Video, { OnLoadData, OnProgressData, OnErrorData } from 'react-native-video';
 
 import { RootStackParamList } from '../navigation/types';
-import { DownloadedMediaItem, SearchResult } from '../types'; // SearchResult might be needed if MusicCard expects it
+import { DownloadedMediaItem } from '../types'; // SearchResult removed as adapter handles it
 import { getLibraryItems, removeLibraryItem } from '../services/libraryStorageService';
-import { DefaultTheme, Spacing, Typography } from '../theme/theme';
-import MusicCard from '../components/cards/MusicCard'; // Import MusicCard
-import Icon from '../components/ui/Icon'; // For mini-player icons
+import { useAppTheme } from '../context/ThemeContext';
+import { usePlayback } from '../context/PlaybackContext';
+import MusicCard from '../components/cards/MusicCard';
+import Icon from '../components/ui/Icon';
 
 type LibraryScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Library'>;
+interface Props { navigation: LibraryScreenNavigationProp; }
 
-interface Props {
-  navigation: LibraryScreenNavigationProp;
-}
-
-interface PlaybackProgress {
-  currentTime: number;
-  seekableDuration: number;
-}
+// PlaybackProgress interface is now in PlaybackContext via PlaybackProgressState
 
 const LibraryScreen: React.FC<Props> = ({ navigation }) => {
+  const { theme } = useAppTheme();
+  const playback = usePlayback();
+
   const [libraryItems, setLibraryItems] = useState<DownloadedMediaItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingList, setIsLoadingList] = useState(true);
 
-  // Playback states
-  const [selectedTrack, setSelectedTrack] = useState<DownloadedMediaItem | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackError, setPlaybackError] = useState<string | null>(null);
-  const [playbackProgress, setPlaybackProgress] = useState<PlaybackProgress>({ currentTime: 0, seekableDuration: 0 });
-  const videoPlayerRef = useRef<Video>(null);
-
-  // This state is for the stream URL if we were streaming. For local files, filePath is used.
-  const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
-
+  // REMOVED: selectedTrack, isPlaying, playbackError, playbackProgress, videoPlayerRef, currentFilePath local states
 
   const loadLibrary = async () => {
-    setIsLoading(true);
+    setIsLoadingList(true);
     const items = await getLibraryItems();
-    setLibraryItems(items.sort((a, b) => new Date(b.downloadedAt).getTime() - new Date(a.downloadedAt).getTime())); // Sort by newest first
-    setIsLoading(false);
+    setLibraryItems(items.sort((a, b) => new Date(b.downloadedAt).getTime() - new Date(a.downloadedAt).getTime()));
+    setIsLoadingList(false);
   };
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       loadLibrary();
-      // Stop playback when navigating to library if something was playing (e.g. from search results)
-      // This is a simple approach. A global player context would be more robust.
-      if (selectedTrack) { // If a track from library was playing, it will be re-selected or cleared by new logic
-          // If we want to stop any playback when entering library:
-          // setIsPlaying(false);
-          // setSelectedTrack(null);
-          // setCurrentFilePath(null);
-      }
+      // If a track from another screen was playing, it will continue via context.
+      // If we specifically want to stop it when entering library, call playback.clearPlayer() or playback.togglePlayPause()
+      // For now, playback continues unless a new track is played from library.
     });
     return unsubscribe;
   }, [navigation]);
 
-
-  const handlePlayPauseFromLibrary = (item: DownloadedMediaItem) => {
-    setPlaybackError(null);
-    if (selectedTrack?.id === item.id) {
-      setIsPlaying(!isPlaying);
-    } else {
-      setSelectedTrack(item);
-      setCurrentFilePath(`file://${item.filePath}`); // Set the local file path for the Video component
-      setIsPlaying(true); // Auto-play when a new item is selected
-      setPlaybackProgress({ currentTime: 0, seekableDuration: 0 }); // Reset progress
-    }
-  };
-
-  const onVideoLoad = (data: OnLoadData) => {
-    console.log('Library video loaded, duration:', data.duration);
-    setPlaybackProgress(prev => ({ ...prev, seekableDuration: data.duration }));
-  };
-
-  const onVideoProgress = (data: OnProgressData) => {
-    setPlaybackProgress({ currentTime: data.currentTime, seekableDuration: data.seekableDuration || playbackProgress.seekableDuration });
-  };
-
-  const onVideoError = (error: OnErrorData) => {
-    console.error('Library video playback error:', error);
-    const errorMessage = error.error?.localizedFailureReason || error.error?.localizedDescription || 'Unknown playback error';
-    Alert.alert('Playback Error', `Could not play ${selectedTrack?.title}: ${errorMessage}`);
-    setPlaybackError(errorMessage);
-    setIsPlaying(false);
-  };
-
-  const onVideoEnd = () => {
-    setIsPlaying(false);
-    setPlaybackProgress({ currentTime: 0, seekableDuration: 0 });
-    // Optionally clear selectedTrack or play next
-  };
-
-
   const handleRemoveFromLibrary = async (item: DownloadedMediaItem) => {
-    Alert.alert(
-      'Remove Item',
-      `Are you sure you want to remove "${item.title}" from your library metadata? This will not delete the actual file.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
+    Alert.alert( 'Remove Item', `Are you sure you want to remove "${item.title}"?`,
+      [ { text: 'Cancel', style: 'cancel' },
         { text: 'Remove', style: 'destructive', onPress: async () => {
-            if (selectedTrack?.id === item.id) { // Stop playback if removing current track
-                setIsPlaying(false);
-                setSelectedTrack(null);
-                setCurrentFilePath(null);
+            if (playback.currentTrack?.id === item.id) { // Check against context's current track
+              playback.clearPlayer();
             }
             await removeLibraryItem(item.id);
             loadLibrary();
@@ -115,41 +55,58 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
-
-  if (isLoading) {
-    return <View style={styles.centered}><ActivityIndicator size='large' color={DefaultTheme.colors.accentPrimary} /></View>;
-  }
-
-  if (libraryItems.length === 0) {
+  if (isLoadingList) {
+    return <View style={styles.centered}><ActivityIndicator size='large' color={theme.colors.accentPrimary} /></View>;
+   }
+  if (libraryItems.length === 0 && !isLoadingList) {
     return <View style={styles.centered}><Text style={styles.emptyText}>Your library is empty. Download some music!</Text></View>;
   }
 
   const renderLibraryItem = ({ item }: { item: DownloadedMediaItem }) => {
-    const cardItemAdapter: SearchResult = {
-        id: item.id, // Use the library item's unique ID
-        videoId: item.videoId,
-        title: item.title,
+    // Adapt DownloadedMediaItem to PlayerTrack for playTrack function
+    // MusicCard expects SearchResult-like, so adapter is still useful.
+    const cardItemAdapter = {
+        id: item.id, videoId: item.videoId, title: item.title,
         channel: item.channel || 'Unknown Artist',
-        thumbnail: item.thumbnail || '',
-        duration: item.duration || 0,
+        thumbnail: item.thumbnail || '', duration: item.duration || 0,
         publishedAt: item.downloadedAt,
     };
-    const isCurrentlyPlayingItem = selectedTrack?.id === item.id && isPlaying;
+    const isCurrentlyPlayingItem = playback.currentTrack?.id === item.id && playback.isPlaying;
+    // isLoading for playback of THIS item is playback.isLoading && playback.currentTrack?.id === item.id
+    const isLoadingItemPlayback = playback.isLoading && playback.currentTrack?.id === item.id;
 
     return (
         <MusicCard
             item={cardItemAdapter}
-            onPlayPause={() => handlePlayPauseFromLibrary(item)}
+            onPlayPause={() => playback.playTrack(item)} // Pass DownloadedMediaItem
             isPlaying={isCurrentlyPlayingItem}
-            isLoading={false} // No individual loading for local files
-            onDownloadMp3={() => handleRemoveFromLibrary(item)} // Re-purpose download button for remove
+            isLoading={isLoadingItemPlayback} // Loading state from context for this specific item
+            onDownloadMp3={() => handleRemoveFromLibrary(item)}
         />
     );
   };
 
-  const progressPercent = playbackProgress.seekableDuration > 0
-    ? (playbackProgress.currentTime / playbackProgress.seekableDuration) * 100
-    : 0;
+  const progressPercent = playback.progress.seekableDuration > 0
+    ? (playback.progress.currentTime / playback.progress.seekableDuration) * 100 : 0;
+
+  // Styles are now a function of theme
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.backgroundPrimary },
+    listContent: { padding: theme.spacing.md, paddingBottom: playback.currentTrack ? 80 + theme.spacing.md : theme.spacing.md },
+    miniPlayerTouchableWrapper: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10 },
+    miniPlayer: { backgroundColor: theme.colors.backgroundSecondary, borderTopWidth: 1, borderTopColor: theme.colors.border, paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.sm, paddingBottom: theme.spacing.xs, },
+    miniPlayerInfoAndButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.xs, },
+    miniPlayerInfo: { flex: 1, marginRight: theme.spacing.sm, },
+    miniPlayerText: { color: theme.colors.textPrimary, fontSize: theme.typography.fontSize.body, fontWeight: theme.typography.fontWeight.bold as any, fontFamily: theme.typography.fontFamily.primary },
+    miniPlayerArtist: { color: theme.colors.textSecondary, fontSize: theme.typography.fontSize.caption, fontFamily: theme.typography.fontFamily.primary },
+    miniPlayerError: { color: theme.colors.error, fontSize: theme.typography.fontSize.caption, fontStyle: 'italic', fontFamily: theme.typography.fontFamily.primary },
+    miniPlayerButton: { padding: theme.spacing.xs, },
+    progressBarContainer: { height: 4, backgroundColor: theme.colors.backgroundTertiary, borderRadius: theme.borderRadius.xs, overflow: 'hidden',},
+    progressBar: { height: '100%', backgroundColor: theme.colors.accentPrimary, borderRadius: theme.borderRadius.xs, },
+    centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.spacing.lg, backgroundColor: theme.colors.backgroundPrimary },
+    emptyText: { fontSize: theme.typography.fontSize.bodyLarge, color: theme.colors.textSecondary, textAlign: 'center', fontFamily: theme.typography.fontFamily.primary },
+    separator: { height: 1, backgroundColor: theme.colors.border, marginHorizontal: theme.spacing.md }, // Kept for FlatList ItemSeparatorComponent
+  });
 
   return (
     <View style={styles.container}>
@@ -157,83 +114,39 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
         data={libraryItems}
         keyExtractor={(item) => item.id}
         renderItem={renderLibraryItem}
-        // ItemSeparatorComponent={() => <View style={styles.separator} />} // MusicCard has marginBottom
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
       />
-
-      {currentFilePath && selectedTrack && (
-        <Video
-          ref={videoPlayerRef}
-          source={{ uri: currentFilePath }} // Use file URI scheme
-          paused={!isPlaying}
-          audioOnly={true}
-          playInBackground={true}
-          playWhenInactive={true}
-          onError={onVideoError}
-          onLoad={onVideoLoad}
-          onProgress={onVideoProgress}
-          onEnd={onVideoEnd}
-          style={styles.videoPlayer}
-          progressUpdateInterval={1000}
-        />
-      )}
-
-      {selectedTrack && (
-      <TouchableOpacity
-        style={styles.miniPlayerTouchableWrapper} // New wrapper style
-        onPress={() => {
-          if (selectedTrack) {
-            navigation.navigate('Player', {
-              track: selectedTrack, // selectedTrack is DownloadedMediaItem here
-              isPlaying: isPlaying,
-              progress: playbackProgress
-            });
-          }
-        }}
-      >
-        <View style={styles.miniPlayer}>
-            <View style={styles.miniPlayerInfoAndButton}>
-                <View style={styles.miniPlayerInfo}>
-                    <Text style={styles.miniPlayerText} numberOfLines={1}>{selectedTrack.title}</Text>
-                    <Text style={styles.miniPlayerArtist} numberOfLines={1}>{selectedTrack.channel}</Text>
-                    {playbackError && (<Text style={styles.miniPlayerError} numberOfLines={1}>Error: {playbackError}</Text>)}
+      {playback.currentTrack && (
+        <TouchableOpacity
+            style={styles.miniPlayerTouchableWrapper}
+            onPress={() => navigation.navigate('Player')} // Navigate without params
+        >
+            <View style={styles.miniPlayer}>
+                <View style={styles.miniPlayerInfoAndButton}>
+                    <View style={styles.miniPlayerInfo}>
+                        <Text style={styles.miniPlayerText} numberOfLines={1}>{playback.currentTrack.title}</Text>
+                        <Text style={styles.miniPlayerArtist} numberOfLines={1}>{'channel' in playback.currentTrack ? playback.currentTrack.channel : (playback.currentTrack as any).artist || ''}</Text>
+                        {playback.error && !playback.isLoading && (
+                          <Text style={styles.miniPlayerError} numberOfLines={1}>Error: {playback.error}</Text>
+                        )}
+                    </View>
+                    <TouchableOpacity onPress={playback.togglePlayPause} style={styles.miniPlayerButton}>
+                        {playback.isLoading && playback.currentTrack?.id === playback.currentTrack.id ? ( // check if loading THIS track
+                          <ActivityIndicator size='small' color={theme.colors.textPrimary} />
+                        ) : (
+                          <Icon name={playback.isPlaying ? 'Pause' : 'Play'} size={28} color={theme.colors.textPrimary} />
+                        )}
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => handlePlayPauseFromLibrary(selectedTrack)} style={styles.miniPlayerButton}>
-                    <Icon name={isPlaying ? 'Pause' : 'Play'} size={28} color={DefaultTheme.colors.textPrimary} />
-                </TouchableOpacity>
+                <View style={styles.progressBarContainer}>
+                    <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
+                </View>
             </View>
-            <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
-            </View>
-        </View>
+        </TouchableOpacity>
       )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: DefaultTheme.colors.backgroundPrimary },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.lg },
-  emptyText: { fontSize: Typography.fontSize.bodyLarge, color: DefaultTheme.colors.textSecondary, textAlign: 'center' },
-  listContent: { padding: Spacing.md, paddingBottom: 80 }, // Ensure paddingBottom accommodates miniPlayer
-  // separator: { height: 1, backgroundColor: DefaultTheme.colors.border, marginHorizontal: Spacing.md, marginVertical: Spacing.xs },
-  videoPlayer: { width: 0, height: 0 },
-  miniPlayerTouchableWrapper: { // Style for the new TouchableOpacity
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10, // Ensure it's above other flatlist content
-  },
-  miniPlayer: { position: 'absolute', bottom: 0,left: 0, right: 0, backgroundColor: DefaultTheme.colors.backgroundSecondary, borderTopWidth: 1, borderTopColor: DefaultTheme.colors.border, paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xs, },
-  miniPlayerInfoAndButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.xs, },
-  miniPlayerInfo: { flex: 1, marginRight: Spacing.sm, },
-  miniPlayerText: { color: DefaultTheme.colors.textPrimary, fontSize: Typography.fontSize.body, fontWeight: 'bold', },
-  miniPlayerArtist: { color: DefaultTheme.colors.textSecondary, fontSize: Typography.fontSize.caption, },
-  miniPlayerError: { color: DefaultTheme.colors.error, fontSize: Typography.fontSize.caption, fontStyle: 'italic',},
-  miniPlayerButton: { padding: Spacing.xs, },
-  progressBarContainer: { height: 4, backgroundColor: DefaultTheme.colors.backgroundTertiary, borderRadius: 2, overflow: 'hidden',},
-  progressBar: { height: '100%', backgroundColor: DefaultTheme.colors.accentPrimary, borderRadius: 2, },
-});
 
 export default LibraryScreen;
