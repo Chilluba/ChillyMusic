@@ -1,26 +1,29 @@
-import React, { createContext, useState, useRef, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useRef, useContext, ReactNode, useEffect, useCallback } from 'react';
 // @ts-ignore
 import Video, { OnLoadData, OnProgressData, OnErrorData } from 'react-native-video';
 import { Alert } from 'react-native';
-import { PlayerScreenTrack, PlaybackProgressState } from '../navigation/types'; // Reusing types
+import { PlayerScreenTrack, PlaybackProgressState } from '../navigation/types';
 import { fetchMediaInfo } from '../services/apiService';
 import { MediaInfo, SearchResult, DownloadedMediaItem } from '../types';
+
+
+export type RepeatMode = 'off' | 'one'; // 'all' for future
 
 interface PlaybackContextType {
   currentTrack: PlayerScreenTrack | null;
   isPlaying: boolean;
-  isLoading: boolean; // Loading media info or stream
+  isLoading: boolean;
   progress: PlaybackProgressState;
   error: string | null;
+  repeatMode: RepeatMode; // Added
   playTrack: (track: PlayerScreenTrack) => void;
   togglePlayPause: () => void;
   seekTo: (time: number) => void;
-  // skipNext: () => void; // Placeholder
-  // skipPrevious: () => void; // Placeholder
+  setRepeatMode: () => void; // Added: cycles 'off' -> 'one' -> 'off'
+  clearPlayer: () => void;
 }
 
 const initialProgress: PlaybackProgressState = { currentTime: 0, seekableDuration: 0 };
-
 const PlaybackContext = createContext<PlaybackContextType | undefined>(undefined);
 
 export const PlaybackProvider: React.FC<{children: ReactNode}> = ({ children }) => {
@@ -30,8 +33,8 @@ export const PlaybackProvider: React.FC<{children: ReactNode}> = ({ children }) 
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState<PlaybackProgressState>(initialProgress);
   const [error, setError] = useState<string | null>(null);
-
   const videoPlayerRef = useRef<Video>(null);
+  const [repeatMode, setRepeatModeState] = useState<RepeatMode>('off');
 
   useEffect(() => {
     if (!currentTrack) {
@@ -39,39 +42,37 @@ export const PlaybackProvider: React.FC<{children: ReactNode}> = ({ children }) 
       setIsPlaying(false);
       setProgress(initialProgress);
       setError(null);
+      // Do not reset repeatMode here, user preference should persist
     }
-  }, [currentTrack]);
+   }, [currentTrack]);
 
   const playTrack = async (track: PlayerScreenTrack) => {
     setError(null);
     setIsLoading(true);
     setProgress(initialProgress);
 
-    // If the same track is selected, and it's already playing, behavior might be to restart or do nothing.
-    // If it's paused, then resume. For now, if same track, it implies a restart or unpause via toggle.
     if (currentTrack?.id === track.id && currentTrack.videoId === track.videoId && streamUrl) {
-      setIsPlaying(true); // Ensure it plays
-      videoPlayerRef.current?.seek(0); // Restart from beginning
+      setIsPlaying(true);
+      videoPlayerRef.current?.seek(0);
       setIsLoading(false);
       return;
     }
 
-    setCurrentTrack(track); // Set new track
-    setIsPlaying(false); // Start paused until ready
+    setCurrentTrack(track);
+    setIsPlaying(false);
 
     if ('filePath' in track && track.filePath) {
-      console.log('Playing local file:', track.filePath);
+      console.log('[PlaybackContext] Playing local file:', track.filePath);
       setStreamUrl(`file://${track.filePath}`);
-      // Duration for local files might already be in track.duration, Video onLoad will confirm
       setIsPlaying(true);
       setIsLoading(false);
     } else {
       try {
-        console.log('Fetching media info for track:', track.title);
+        console.log('[PlaybackContext] Fetching media info for track:', track.title);
         const info = await fetchMediaInfo(track.videoId);
         const audioFormat = info.formats.find(f => f.ext === 'm4a' || f.ext === 'mp3' || f.audioCodec);
         if (audioFormat?.url) {
-          console.log('Stream URL fetched:', audioFormat.url);
+          console.log('[PlaybackContext] Stream URL fetched:', audioFormat.url);
           setStreamUrl(audioFormat.url);
           setIsPlaying(true);
         } else {
@@ -91,74 +92,73 @@ export const PlaybackProvider: React.FC<{children: ReactNode}> = ({ children }) 
 
   const togglePlayPause = () => {
     if (!currentTrack || !streamUrl) {
-        if (currentTrack) { // If track is selected but no streamUrl (e.g. error state), try playing it again
+        if (currentTrack) {
             playTrack(currentTrack);
         }
         return;
     }
     setIsPlaying(!isPlaying);
   };
+  const seekTo = (time: number) => { if(videoPlayerRef.current) videoPlayerRef.current.seek(time); };
 
-  const seekTo = (time: number) => {
-    if (videoPlayerRef.current) {
-        videoPlayerRef.current.seek(time);
-        // Keep playing if it was playing, or paused if it was paused.
-        // If paused, RN Video typically updates currentTime but doesn't auto-play.
-        // If playing, it continues from new time.
-    }
+  const clearPlayer = () => {
+    setCurrentTrack(null);
+    // streamUrl, isPlaying, progress, error will be reset by useEffect on currentTrack change
   };
+
+  const setRepeatMode = useCallback(() => {
+    setRepeatModeState(prev => {
+      if (prev === 'off') return 'one';
+      return 'off';
+    });
+  }, []);
 
   const onVideoLoad = (data: OnLoadData) => {
-    console.log(`Video loaded. Duration: ${data.duration}s. Track: ${currentTrack?.title}`);
+    console.log(`[PlaybackContext] Video loaded. Duration: ${data.duration}s. Track: ${currentTrack?.title}`);
     setProgress(prev => ({ ...prev, seekableDuration: data.duration }));
-    if (currentTrack && 'filePath' in currentTrack && currentTrack.filePath) { // Autoplay local files if they were set to play
+    if (currentTrack && ('filePath' in currentTrack && currentTrack.filePath || streamUrl)) {
         setIsPlaying(true);
     }
-    // For streamed files, isPlaying is set after streamUrl is fetched and set.
   };
-  const onVideoProgress = (data: OnProgressData) => {
-    setProgress({ currentTime: data.currentTime, seekableDuration: data.seekableDuration || progress.seekableDuration });
-  };
+  const onVideoProgress = (data: OnProgressData) => { setProgress({ currentTime: data.currentTime, seekableDuration: data.seekableDuration || progress.seekableDuration }); };
   const onVideoError = (err: OnErrorData) => {
     const errorMessage = err.error?.localizedFailureReason || err.error?.localizedDescription || 'Unknown playback error';
-    console.error('Video Playback Error:', errorMessage, err);
+    console.error('[PlaybackContext] Video Playback Error:', errorMessage, err);
     setError(errorMessage);
     setIsPlaying(false);
-    // Alert.alert('Playback Error', errorMessage); // Can be too intrusive if error is minor or auto-recovers
   };
+
   const onVideoEnd = () => {
-    setIsPlaying(false);
-    setProgress(prev => ({ ...prev, currentTime: prev.seekableDuration }));
+    console.log('[PlaybackContext] Video ended. Repeat mode:', repeatMode);
+    if (repeatMode === 'one' && currentTrack) {
+      if (videoPlayerRef.current) {
+        videoPlayerRef.current.seek(0);
+      }
+      // setIsPlaying(true); // This might be needed if seek(0) doesn't auto-restart, or if player pauses on end
+      // For react-native-video, ensuring `paused` prop becomes false is key.
+      // If `isPlaying` state is already true, and `paused` is `!isPlaying`, it should restart.
+      // If it pauses by default, we might need to call `playTrack(currentTrack)` or similar.
+      // Let's rely on current isPlaying state and seek to restart.
+      // If it was already playing, it should resume. If it stopped, togglePlayPause or playTrack.
+      // A simple seek(0) might not be enough if the player state internally changes to "ended" and stops.
+      // Forcing play:
+       setTimeout(() => setIsPlaying(true), 100); // Small delay to ensure seek completes then play signal
+    } else {
+      setIsPlaying(false);
+      setProgress(prev => ({ ...prev, currentTime: prev.seekableDuration }));
+    }
   };
 
   return (
-    <PlaybackContext.Provider value={{ currentTrack, isPlaying, isLoading, progress, error, playTrack, togglePlayPause, seekTo }}>
+    <PlaybackContext.Provider value={{ currentTrack, isPlaying, isLoading, progress, error, repeatMode, playTrack, togglePlayPause, seekTo, setRepeatMode, clearPlayer }}>
       {children}
-      {streamUrl && (
-        <Video
-          ref={videoPlayerRef}
-          source={{ uri: streamUrl }}
-          paused={!isPlaying || isLoading}
-          audioOnly={true}
-          playInBackground={true}
-          playWhenInactive={true} // Ensure this is true for background on iOS
-          ignoreSilentSwitch={"ignore"} // ignore silent switch
-          onError={onVideoError}
-          onLoad={onVideoLoad}
-          onProgress={onVideoProgress}
-          onEnd={onVideoEnd}
-          style={{ width: 0, height: 0 }}
-          progressUpdateInterval={1000}
-        />
-      )}
+      {streamUrl && ( <Video ref={videoPlayerRef} source={{ uri: streamUrl }} paused={!isPlaying || isLoading} audioOnly={true} playInBackground={true} playWhenInactive={true} ignoreSilentSwitch={"ignore"} onError={onVideoError} onLoad={onVideoLoad} onProgress={onVideoProgress} onEnd={onVideoEnd} style={{ width: 0, height: 0 }} progressUpdateInterval={1000} /> )}
     </PlaybackContext.Provider>
   );
 };
 
 export const usePlayback = (): PlaybackContextType => {
   const context = useContext(PlaybackContext);
-  if (context === undefined) {
-    throw new Error('usePlayback must be used within a PlaybackProvider');
-  }
+  if (context === undefined) throw new Error('usePlayback must be used within a PlaybackProvider');
   return context;
-};
+ };

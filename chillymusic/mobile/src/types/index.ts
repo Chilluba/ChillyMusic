@@ -48,3 +48,12 @@ export interface DownloadedMediaItem {
   quality: string;
   duration?: number; // Store duration if available from MediaInfo
 }
+
+export interface FavoriteItem {
+  id: string; // videoId will serve as id
+  videoId: string;
+  title: string;
+  channel?: string;
+  thumbnail?: string;
+  addedAt: string; // ISO date string
+}

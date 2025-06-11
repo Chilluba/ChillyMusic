@@ -7,19 +7,15 @@ import { DownloadOption } from '../components/modals/DownloadOptionsModal';
 import { fetchDownloadLink } from '../services/apiService';
 import { saveLibraryItem } from '../services/libraryStorageService';
 
-// Structure for an active download
 export interface ActiveDownloadProgress {
-  jobId: number; // RNFS download job ID
-  progress: number; // 0-100
+  jobId: number;
+  progress: number;
   bytesWritten: number;
   contentLength: number;
   error?: string;
-  filePath?: string; // Final path on completion
-  // Store some metadata for UI updates while download is active
+  filePath?: string;
   itemMetadata: Pick<DownloadedMediaItem, 'id' | 'videoId' | 'title' | 'channel' | 'thumbnail' | 'format' | 'quality' | 'duration'>;
 }
-
-// Key for activeDownloads can be a composite ID (videoId_format_quality)
 export type ActiveDownloadsState = Record<string, ActiveDownloadProgress>;
 
 interface DownloadContextType {
@@ -30,6 +26,8 @@ interface DownloadContextType {
 }
 
 const DownloadContext = createContext<DownloadContextType | undefined>(undefined);
+
+const MAX_CONCURRENT_DOWNLOADS = 3;
 
 export const DownloadProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [activeDownloads, setActiveDownloads] = useState<ActiveDownloadsState>({});
@@ -58,16 +56,25 @@ export const DownloadProvider: React.FC<{children: ReactNode}> = ({ children }) 
     option: DownloadOption,
     mediaInfo?: MediaInfo | null
   ) => {
-    const hasPermission = await requestStoragePermission();
-    if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Storage permission is required to download files.');
-      return;
-    }
-
     const downloadKey = `${track.videoId}_${option.format}_${option.quality}`;
 
     if (activeDownloads[downloadKey] && activeDownloads[downloadKey].progress < 100 && !activeDownloads[downloadKey].error) {
-      Alert.alert('In Progress', `"${track.title}" is already downloading.`);
+      Alert.alert('In Progress', `"${track.title} (${option.label})" is already downloading.`);
+      return;
+    }
+
+    const currentDownloadingCount = Object.values(activeDownloads).filter(
+      dl => dl.progress < 100 && !dl.error
+    ).length;
+
+    if (currentDownloadingCount >= MAX_CONCURRENT_DOWNLOADS) {
+      Alert.alert('Limit Reached', `Max concurrent downloads (${MAX_CONCURRENT_DOWNLOADS}) reached. Please wait for current downloads to complete.`);
+      return;
+    }
+
+    const hasPermission = await requestStoragePermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Storage permission is required to download files.');
       return;
     }
 
@@ -79,10 +86,9 @@ export const DownloadProvider: React.FC<{children: ReactNode}> = ({ children }) 
         thumbnail: track.thumbnail,
         format: option.format,
         quality: option.quality,
-        duration: mediaInfo?.duration || ('duration' in track ? track.duration : undefined)
+        duration: mediaInfo?.duration || ('duration' in track ? track.duration : undefined) || option.formatDetails?.duration
     };
 
-    // Set initial state for the download
     setActiveDownloads(prev => ({
       ...prev,
       [downloadKey]: { jobId: -1, progress: 0, bytesWritten: 0, contentLength: 0, itemMetadata: initialItemMetadata, error: undefined }
@@ -113,7 +119,6 @@ export const DownloadProvider: React.FC<{children: ReactNode}> = ({ children }) 
         },
         progress: (res) => {
           const progressPercent = res.contentLength > 0 ? (res.bytesWritten / res.contentLength) * 100 : 0;
-          // console.log(`[DownloadContext] Progress (${track.title}): ${progressPercent.toFixed(0)}%`);
           setActiveDownloads(prev => ({
             ...prev,
             [downloadKey]: { ...prev[downloadKey], progress: progressPercent, bytesWritten: res.bytesWritten, contentLength: res.contentLength, itemMetadata: initialItemMetadata }
@@ -145,26 +150,18 @@ export const DownloadProvider: React.FC<{children: ReactNode}> = ({ children }) 
       setActiveDownloads(prev => ({ ...prev, [downloadKey]: { ...prev[downloadKey], error: error.message || 'Unknown download error', progress: -1, itemMetadata: initialItemMetadata } }));
       Alert.alert('Download Error', `Could not download "${track.title}": ${error.message}`);
     }
-  }, [activeDownloads]); // Dependency: activeDownloads to check for existing downloads
+  }, [activeDownloads]);
 
   const cancelDownload = useCallback(async (downloadKey: string) => {
     const download = activeDownloads[downloadKey];
     if (download && download.jobId !== -1 && download.progress < 100 && !download.error) {
       try {
         console.log(`[DownloadContext] Cancelling download for job ID: ${download.jobId}`);
-        await RNFS.stopDownload(download.jobId); // This is for network tasks, for downloadFile, it's primarily about cleanup
-
-        // Try to delete the partial file if one was started
-        // const tempPath = `${Platform.OS === 'ios' ? RNFS.DocumentDirectoryPath : RNFS.DownloadDirectoryPath}/${download.itemMetadata?.title}_${download.itemMetadata?.quality}.${download.itemMetadata?.format}.tmp`; // Example, actual temp path might not be known
-        // if (await RNFS.exists(tempPath)) { await RNFS.unlink(tempPath); }
-        // Or, if toFile path was already determined:
-        // if (download.filePath && await RNFS.exists(download.filePath)) { await RNFS.unlink(download.filePath); }
-
-
+        await RNFS.stopDownload(download.jobId);
         Alert.alert('Download Cancelled', `Download for "${download.itemMetadata?.title || 'track'}" was cancelled.`);
         setActiveDownloads(prev => {
           const newState = { ...prev };
-          newState[downloadKey] = { ...newState[downloadKey], error: 'Cancelled', progress: -1 };
+          newState[downloadKey] = { ...newState[downloadKey], error: 'Cancelled', progress: -1 }; // Mark as errored/cancelled
           return newState;
         });
       } catch (e) {
@@ -177,10 +174,10 @@ export const DownloadProvider: React.FC<{children: ReactNode}> = ({ children }) 
     setActiveDownloads(prev => {
       const current = prev[downloadKey];
       if (current && (current.progress === 100 || current.error)) {
-        const { [downloadKey]: _, ...rest } = prev; // Remove the item
+        const { [downloadKey]: _, ...rest } = prev;
         return rest;
       }
-      return prev; // No change if not completed or errored
+      return prev;
     });
   }, []);
 

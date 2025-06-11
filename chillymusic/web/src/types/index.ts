@@ -48,3 +48,12 @@ export interface WebLibraryItem {
   originalDownloadUrl?: string; // The URL provided by yt-dlp, might expire
   fileName?: string; // The filename used when download was triggered
 }
+
+export interface FavoriteItem {
+  id: string; // videoId will serve as id
+  videoId: string;
+  title: string;
+  channel?: string;
+  thumbnail?: string;
+  addedAt: string; // ISO date string
+}

@@ -26,9 +26,11 @@ const iconMap: Record<string, string> = {
   SkipBack: '⏮️',
   SkipForward: '⏭️',
   Repeat: '🔁',
+  RepeatOne: '🔁¹', // Added RepeatOne
   Heart: '❤️',
+  HeartOutline: '♡',
   PlaylistAdd: '➕🎶',
-  Check: '✓', // Added Check icon
+  Check: '✓',
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {
