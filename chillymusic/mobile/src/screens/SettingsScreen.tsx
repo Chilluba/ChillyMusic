@@ -5,8 +5,7 @@ import { RootStackParamList } from '../navigation/types';
 // import { DefaultTheme, Spacing, Typography, BorderRadius } from '../theme/theme'; // No longer directly use DefaultTheme for colors
 import { ThemePreference } from '../services/settingsService'; // Keep this type
 import { useAppTheme } from '../context/ThemeContext'; // Import context hook
-// Icon import was present in the original prompt for SettingsScreen but not used, can be removed if not needed for checkmark.
-// For now, using text '✓'.
+import Icon from '../components/ui/Icon'; // Ensure Icon is imported
 
 type SettingsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Settings'>;
 interface Props { navigation: SettingsScreenNavigationProp; }
@@ -102,6 +101,18 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             )}
           </TouchableOpacity>
         ))}
+      </View>
+
+      {/* Manage Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Manage</Text>
+        <TouchableOpacity
+            style={styles.optionButton}
+            onPress={() => navigation.navigate('Downloads')}
+        >
+            <Text style={styles.optionText}>View Downloads</Text>
+            <Icon name='Download' size={20} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
       </View>
     </View>
   );
