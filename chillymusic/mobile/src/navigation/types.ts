@@ -16,7 +16,7 @@ export interface PlayerScreenParams {
 
 export type RootStackParamList = {
   Home: undefined; // No params for Home
-  SearchResults: { query: string; results: SearchResult[] };
+  SearchResults: { query: string; results: SearchResult[]; searchError?: string | null; };
   Library: undefined;
   Settings: undefined;
   Player: PlayerScreenParams;

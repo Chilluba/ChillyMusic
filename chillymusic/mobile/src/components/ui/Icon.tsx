@@ -32,6 +32,7 @@ const iconMap: Record<string, string> = {
   HeartOutline: '♡',
   PlaylistAdd: '➕🎶',
   Check: '✓',
+  Error: '⚠️',
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {
