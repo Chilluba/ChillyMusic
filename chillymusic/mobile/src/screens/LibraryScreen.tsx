@@ -1,19 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+// @ts-ignore
+import RNFS from 'react-native-fs'; // For deleting files
 
 import { RootStackParamList } from '../navigation/types';
-import { DownloadedMediaItem } from '../types'; // SearchResult removed as adapter handles it
-import { getLibraryItems, removeLibraryItem } from '../services/libraryStorageService';
+import { DownloadedMediaItem, SearchResult } from '../types';
+import { getLibraryItems, removeLibraryItem as removeLibraryItemMeta } from '../services/libraryStorageService';
 import { useAppTheme } from '../context/ThemeContext';
 import { usePlayback } from '../context/PlaybackContext';
 import MusicCard from '../components/cards/MusicCard';
 import Icon from '../components/ui/Icon';
 
+// Assume DownloadContext will provide this type or similar
+interface ActiveDownload {
+  progress: number;
+  jobId?: number;
+  error?: string;
+  filePath?: string; // The final path once known
+}
+
 type LibraryScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Library'>;
 interface Props { navigation: LibraryScreenNavigationProp; }
-
-// PlaybackProgress interface is now in PlaybackContext via PlaybackProgressState
 
 const LibraryScreen: React.FC<Props> = ({ navigation }) => {
   const { theme } = useAppTheme();
@@ -22,7 +30,8 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
   const [libraryItems, setLibraryItems] = useState<DownloadedMediaItem[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
 
-  // REMOVED: selectedTrack, isPlaying, playbackError, playbackProgress, videoPlayerRef, currentFilePath local states
+  // Placeholder for active downloads - this would come from DownloadContext later
+  const [mockActiveDownloads, _setMockActiveDownloads] = useState<{[key: string]: ActiveDownload}>({}); // Renamed setter to avoid unused var warning
 
   const loadLibrary = async () => {
     setIsLoadingList(true);
@@ -32,64 +41,63 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadLibrary();
-      // If a track from another screen was playing, it will continue via context.
-      // If we specifically want to stop it when entering library, call playback.clearPlayer() or playback.togglePlayPause()
-      // For now, playback continues unless a new track is played from library.
-    });
+    const unsubscribe = navigation.addListener('focus', () => { loadLibrary(); });
     return unsubscribe;
   }, [navigation]);
 
+  const handlePlayFromLibrary = (item: DownloadedMediaItem) => {
+    playback.playTrack(item);
+    navigation.navigate('Player');
+  };
+
+  const handleDeleteFileAndMeta = async (item: DownloadedMediaItem) => {
+    try {
+      if (item.filePath) {
+        const fileExists = await RNFS.exists(item.filePath);
+        if (fileExists) {
+          console.log(`Deleting file: ${item.filePath}`);
+          await RNFS.unlink(item.filePath);
+        } else {
+          console.warn(`File not found for deletion: ${item.filePath}`);
+        }
+      }
+      await removeLibraryItemMeta(item.id); // Remove metadata
+      loadLibrary(); // Refresh list
+      Alert.alert('Deleted', `"${item.title}" has been deleted from your library and device.`);
+    } catch (error: any) {
+      console.error(`Error deleting item ${item.id}:`, error);
+      Alert.alert('Error', `Could not delete item: ${error.message}`);
+    }
+  };
+
   const handleRemoveFromLibrary = async (item: DownloadedMediaItem) => {
-    Alert.alert( 'Remove Item', `Are you sure you want to remove "${item.title}"?`,
-      [ { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: async () => {
-            if (playback.currentTrack?.id === item.id) { // Check against context's current track
+    // Check if the item to be removed is currently selected for playback in the context
+    const isCurrentlySelectedForPlayback = playback.currentTrack?.id === item.id;
+
+    if (isCurrentlySelectedForPlayback && playback.isPlaying) {
+      Alert.alert(
+        'Confirm Deletion',
+        `"${item.title}" is currently playing. Stop playback and delete the file and library entry?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => {
               playback.clearPlayer();
-            }
-            await removeLibraryItem(item.id);
-            loadLibrary();
-        }}
-      ]
-    );
+              handleDeleteFileAndMeta(item);
+          }}
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Confirm Deletion',
+        `Are you sure you want to delete "${item.title}" from your library and device?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => handleDeleteFileAndMeta(item) }
+        ]
+      );
+    }
   };
 
-  if (isLoadingList) {
-    return <View style={styles.centered}><ActivityIndicator size='large' color={theme.colors.accentPrimary} /></View>;
-   }
-  if (libraryItems.length === 0 && !isLoadingList) {
-    return <View style={styles.centered}><Text style={styles.emptyText}>Your library is empty. Download some music!</Text></View>;
-  }
-
-  const renderLibraryItem = ({ item }: { item: DownloadedMediaItem }) => {
-    // Adapt DownloadedMediaItem to PlayerTrack for playTrack function
-    // MusicCard expects SearchResult-like, so adapter is still useful.
-    const cardItemAdapter = {
-        id: item.id, videoId: item.videoId, title: item.title,
-        channel: item.channel || 'Unknown Artist',
-        thumbnail: item.thumbnail || '', duration: item.duration || 0,
-        publishedAt: item.downloadedAt,
-    };
-    const isCurrentlyPlayingItem = playback.currentTrack?.id === item.id && playback.isPlaying;
-    // isLoading for playback of THIS item is playback.isLoading && playback.currentTrack?.id === item.id
-    const isLoadingItemPlayback = playback.isLoading && playback.currentTrack?.id === item.id;
-
-    return (
-        <MusicCard
-            item={cardItemAdapter}
-            onPlayPause={() => playback.playTrack(item)} // Pass DownloadedMediaItem
-            isPlaying={isCurrentlyPlayingItem}
-            isLoading={isLoadingItemPlayback} // Loading state from context for this specific item
-            onDownloadMp3={() => handleRemoveFromLibrary(item)}
-        />
-    );
-  };
-
-  const progressPercent = playback.progress.seekableDuration > 0
-    ? (playback.progress.currentTime / playback.progress.seekableDuration) * 100 : 0;
-
-  // Styles are now a function of theme
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.backgroundPrimary },
     listContent: { padding: theme.spacing.md, paddingBottom: playback.currentTrack ? 80 + theme.spacing.md : theme.spacing.md },
@@ -101,47 +109,82 @@ const LibraryScreen: React.FC<Props> = ({ navigation }) => {
     miniPlayerArtist: { color: theme.colors.textSecondary, fontSize: theme.typography.fontSize.caption, fontFamily: theme.typography.fontFamily.primary },
     miniPlayerError: { color: theme.colors.error, fontSize: theme.typography.fontSize.caption, fontStyle: 'italic', fontFamily: theme.typography.fontFamily.primary },
     miniPlayerButton: { padding: theme.spacing.xs, },
-    progressBarContainer: { height: 4, backgroundColor: theme.colors.backgroundTertiary, borderRadius: theme.borderRadius.xs, overflow: 'hidden',},
-    progressBar: { height: '100%', backgroundColor: theme.colors.accentPrimary, borderRadius: theme.borderRadius.xs, },
+    progressBarContainerMini: { height: 4, backgroundColor: theme.colors.backgroundTertiary, borderRadius: theme.borderRadius.xs, overflow: 'hidden',},
+    progressBarMini: { height: '100%', backgroundColor: theme.colors.accentPrimary, borderRadius: theme.borderRadius.xs, },
     centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: theme.spacing.lg, backgroundColor: theme.colors.backgroundPrimary },
     emptyText: { fontSize: theme.typography.fontSize.bodyLarge, color: theme.colors.textSecondary, textAlign: 'center', fontFamily: theme.typography.fontFamily.primary },
-    separator: { height: 1, backgroundColor: theme.colors.border, marginHorizontal: theme.spacing.md }, // Kept for FlatList ItemSeparatorComponent
+    separator: { height: 1, backgroundColor: theme.colors.border, marginHorizontal: theme.spacing.md },
+    progressContainer: { paddingHorizontal: theme.spacing.md, paddingBottom: theme.spacing.sm, marginTop: -theme.spacing.sm, },
+    progressText: { fontSize: theme.typography.fontSize.caption, color: theme.colors.accentPrimary, marginBottom: theme.spacing.xs / 2, fontFamily: theme.typography.fontFamily.primary },
+    progressBarOuter: { height: 6, backgroundColor: theme.colors.backgroundTertiary, borderRadius: 3, overflow: 'hidden', },
+    progressBarInner: { height: '100%', backgroundColor: theme.colors.accentSecondary, borderRadius: 3, },
+    errorText: { fontSize: theme.typography.fontSize.caption, color: theme.colors.error, fontFamily: theme.typography.fontFamily.primary },
   });
+
+
+  if (isLoadingList) {
+    return <View style={styles.centered}><ActivityIndicator size='large' color={theme.colors.accentPrimary} /></View>;
+   }
+  if (libraryItems.length === 0 && !isLoadingList) {
+    return <View style={styles.centered}><Text style={styles.emptyText}>Your library is empty. Download some music!</Text></View>;
+  }
+
+  const renderLibraryItem = ({ item }: { item: DownloadedMediaItem }) => {
+    const cardItemAdapter: SearchResult = {
+        id: item.id, videoId: item.videoId, title: item.title,
+        channel: item.channel || 'Unknown Artist',
+        thumbnail: item.thumbnail || '', duration: item.duration || 0,
+        publishedAt: item.downloadedAt,
+    };
+    const isCurrentlyPlayingItem = playback.currentTrack?.id === item.id && playback.isPlaying;
+    const isLoadingItemPlayback = playback.isLoading && playback.currentTrack?.id === item.id;
+
+    const downloadStatus = mockActiveDownloads[item.id];
+
+    return (
+      <View>
+        <MusicCard
+            item={cardItemAdapter}
+            onPlayPause={() => handlePlayFromLibrary(item)}
+            isPlaying={isCurrentlyPlayingItem}
+            isLoading={isLoadingItemPlayback}
+            onDownloadMp3={() => handleRemoveFromLibrary(item)}
+        />
+        {downloadStatus && downloadStatus.progress < 100 && !downloadStatus.error && (
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressText}>Downloading: {downloadStatus.progress.toFixed(0)}%</Text>
+            <View style={styles.progressBarOuter}><View style={[styles.progressBarInner, {width: `${downloadStatus.progress}%`}]} /></View>
+          </View>
+        )}
+         {downloadStatus && downloadStatus.error && (
+          <View style={styles.progressContainer}>
+            <Text style={[styles.progressText, {color: theme.colors.error}]}>Download Error</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const progressPercent = playback.progress.seekableDuration > 0
+    ? (playback.progress.currentTime / playback.progress.seekableDuration) * 100 : 0;
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={libraryItems}
-        keyExtractor={(item) => item.id}
-        renderItem={renderLibraryItem}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        contentContainerStyle={styles.listContent}
-      />
+      <FlatList data={libraryItems} keyExtractor={(item) => item.id} renderItem={renderLibraryItem} ItemSeparatorComponent={() => <View style={styles.separator} />} contentContainerStyle={styles.listContent} />
       {playback.currentTrack && (
-        <TouchableOpacity
-            style={styles.miniPlayerTouchableWrapper}
-            onPress={() => navigation.navigate('Player')} // Navigate without params
-        >
+        <TouchableOpacity onPress={() => navigation.navigate('Player')} style={styles.miniPlayerTouchableWrapper}>
             <View style={styles.miniPlayer}>
                 <View style={styles.miniPlayerInfoAndButton}>
                     <View style={styles.miniPlayerInfo}>
                         <Text style={styles.miniPlayerText} numberOfLines={1}>{playback.currentTrack.title}</Text>
-                        <Text style={styles.miniPlayerArtist} numberOfLines={1}>{'channel' in playback.currentTrack ? playback.currentTrack.channel : (playback.currentTrack as any).artist || ''}</Text>
-                        {playback.error && !playback.isLoading && (
-                          <Text style={styles.miniPlayerError} numberOfLines={1}>Error: {playback.error}</Text>
-                        )}
+                        <Text style={styles.miniPlayerArtist} numberOfLines={1}>{'channel' in playback.currentTrack ? playback.currentTrack.channel : ((playback.currentTrack as any).artist || 'Unknown Artist')}</Text>
+                        {playback.error && !playback.isLoading && ( <Text style={styles.miniPlayerError} numberOfLines={1}>Error: {playback.error}</Text> )}
                     </View>
                     <TouchableOpacity onPress={playback.togglePlayPause} style={styles.miniPlayerButton}>
-                        {playback.isLoading && playback.currentTrack?.id === playback.currentTrack.id ? ( // check if loading THIS track
-                          <ActivityIndicator size='small' color={theme.colors.textPrimary} />
-                        ) : (
-                          <Icon name={playback.isPlaying ? 'Pause' : 'Play'} size={28} color={theme.colors.textPrimary} />
-                        )}
+                        {(playback.isLoading && playback.currentTrack?.id === playback.currentTrack.id) ? ( <ActivityIndicator size='small' color={theme.colors.textPrimary} /> ) : ( <Icon name={playback.isPlaying ? 'Pause' : 'Play'} size={28} color={theme.colors.textPrimary} /> )}
                     </TouchableOpacity>
                 </View>
-                <View style={styles.progressBarContainer}>
-                    <View style={[styles.progressBar, { width: `${progressPercent}%` }]} />
-                </View>
+                <View style={styles.progressBarContainerMini}><View style={[styles.progressBarMini, { width: `${progressPercent}%` }]} /></View>
             </View>
         </TouchableOpacity>
       )}

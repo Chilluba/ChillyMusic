@@ -23,8 +23,11 @@ const iconMap: Record<string, string> = {
   DotsThree: '⋮',
   Close: '✕',
   Bookmark: '🔖',
-  SkipBack: '⏮️', // Added SkipBack icon
-  SkipForward: '⏭️', // Added SkipForward icon
+  SkipBack: '⏮️',
+  SkipForward: '⏭️',
+  Repeat: '🔁',
+  Heart: '❤️',
+  PlaylistAdd: '➕🎶', // This might render poorly if system doesn't combine emojis well. Consider separate icons or a single character.
 };
 
 const Icon: React.FC<IconProps> = ({ name, size = 24, color = DefaultTheme.colors.textPrimary, onPress }) => {
