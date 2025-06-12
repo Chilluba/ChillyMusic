@@ -57,3 +57,22 @@ export interface FavoriteItem {
   thumbnail?: string;
   addedAt: string; // ISO date string
 }
+
+export interface PlaylistTrack {
+  videoId: string; // Primary ID for the track itself
+  title: string;
+  channel?: string;
+  thumbnail?: string;
+  duration?: number; // in seconds
+  addedAt: string; // ISO date string when track was added to this playlist
+}
+
+export interface PlaylistItem {
+  id: string; // Unique ID for the playlist (e.g., UUID or timestamp-based)
+  name: string;
+  trackIds: string[]; // Array of videoIds
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  // For getPlaylistWithTracks, we might populate this:
+  tracks?: PlaylistTrack[];
+}
