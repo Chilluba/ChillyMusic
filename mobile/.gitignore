@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+build/
+dist/
+*.js.map
+
+# Metro bundler cache
+.metro-cache/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Temporary files
+*.swp
+*~
+.DS_Store
+
+# Misc
+.idea/
+*.iml
+*.ipr
+
+# Local secrets (if any, though .env should be used and is usually gitignored by default in templates)
+# .env
+# .env.local
+# .env.*.local
+
+# iOS build artifacts
+ios/build/
+ios/Pods/
+ios/.xcode.env.local
+
+# Android build artifacts
+android/build/
+android/app/build/
+android/.gradle/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/res/drawable-mdpi/src_assets_
+# Add other generated android files if necessary
+
+# Jest
+coverage/
