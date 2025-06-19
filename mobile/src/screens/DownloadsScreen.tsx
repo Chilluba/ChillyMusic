@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'; // Removed Image
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { useNavigation } from '@react-navigation/native';
 import { RootState, AppDispatch } from '../store';
-import {
-  ActivityIndicator, // Import ActivityIndicator
-} from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '../store';
+// Removed duplicate imports of useSelector, useDispatch, RootState, AppDispatch
+import PlaceholderImage from '../components/ui/PlaceholderImage'; // Import PlaceholderImage
 import {
   DownloadedMediaItem,
   selectSortedDownloads,
@@ -36,13 +33,18 @@ const formatBytes = (bytes: number, decimals = 2): string => {
 interface DownloadedItemRowProps {
   item: DownloadedMediaItem;
   onPlay: (item: DownloadedMediaItem) => void;
-  onDelete: (id: string, title: string, filePath: string) => void; // filePath added
-  isDeletingThisItem: boolean; // To show loading on this specific item
+  onDelete: (id: string, title: string, filePath: string) => void;
+  isDeletingThisItem: boolean;
 }
 
-const DownloadedItemRow: React.FC<DownloadedItemRowProps> = ({ item, onPlay, onDelete, isDeletingThisItem }) => (
+// Memoize the item component
+const MemoizedDownloadedItemRow = React.memo<DownloadedItemRowProps>(({ item, onPlay, onDelete, isDeletingThisItem }) => (
   <View style={styles.itemContainer}>
-    {item.thumbnail ? <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} /> : <View style={styles.thumbnail} />}
+    <PlaceholderImage
+      sourceURI={item.thumbnail}
+      style={styles.thumbnail} // Ensure styles.thumbnail defines width, height, borderRadius
+      // placeholderStyle={{ backgroundColor: '#30363D' }} // Optional: custom placeholder style
+    />
     <View style={styles.itemInfo}>
       <Text style={styles.itemTitle} numberOfLines={1}>{item.title}</Text>
       <Text style={styles.itemArtist} numberOfLines={1}>{item.artist}</Text>
@@ -64,7 +66,9 @@ const DownloadedItemRow: React.FC<DownloadedItemRowProps> = ({ item, onPlay, onD
         </TouchableOpacity>
     </View>
   </View>
-);
+));
+
+const DOWNLOAD_ITEM_HEIGHT = 85; // Estimated height: Padding(12+12) + Thumbnail(60) + Margin(1) = 85
 
 const sortKeyOptions: FilterOption[] = [
     { label: 'Date Downloaded', value: 'downloadedAt' },
@@ -169,16 +173,22 @@ const DownloadsScreen: React.FC = () => {
         <FlatList
           data={sortedDownloads}
           renderItem={({ item }) =>
-            <DownloadedItemRow
+            <MemoizedDownloadedItemRow // Use memoized component
                 item={item}
                 onPlay={handlePlayItem}
-                onDelete={handleDeleteItemPress} // Use the new handler
+                onDelete={handleDeleteItemPress}
                 isDeletingThisItem={isDeletingId === item.id}
             />
           }
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContentContainer}
-          extraData={isDeletingId} // To help FlatList re-render items when deleting state changes
+          extraData={isDeletingId}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={11} // Should be around 2 * initialNumToRender + 1, or typical screenfuls
+          getItemLayout={(data, index) => (
+            { length: DOWNLOAD_ITEM_HEIGHT, offset: DOWNLOAD_ITEM_HEIGHT * index, index }
+          )}
         />
       )}
       <FilterOptionModal

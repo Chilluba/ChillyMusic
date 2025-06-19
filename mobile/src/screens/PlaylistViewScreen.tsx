@@ -1,7 +1,8 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native'; // Removed Image
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
+import PlaceholderImage from '../components/ui/PlaceholderImage'; // Import PlaceholderImage
 import { selectPlaylistById, removeSongFromPlaylist, deletePlaylist as deletePlaylistAction } from '../store/playlistsSlice';
 import { selectSongById, Song } from '../store/songsSlice';
 import CreatePlaylistModal from '../components/CreatePlaylistModal'; // Assuming this is the modal component
@@ -12,9 +13,14 @@ interface SongItemDisplayProps { // Renamed to avoid conflict with Song type fro
   onRemove: (songId: string) => void;
 }
 
-const SongItemDisplay: React.FC<SongItemDisplayProps> = ({ song, onPlay, onRemove }) => (
+// Memoize the SongItemDisplay component
+const MemoizedSongItemDisplay = React.memo<SongItemDisplayProps>(({ song, onPlay, onRemove }) => (
   <View style={styles.songCard}>
-    {song.thumbnail ? <Image source={{ uri: song.thumbnail }} style={styles.albumArt} /> : <View style={styles.albumArt} /> }
+    <PlaceholderImage
+      sourceURI={song.thumbnail}
+      style={styles.albumArt}
+      // placeholderStyle={{ backgroundColor: '#30363D' }} // Optional custom placeholder style
+    />
     <View style={styles.songInfo}>
       <Text style={styles.songTitle} numberOfLines={1}>{song.title}</Text>
       <Text style={styles.songArtist} numberOfLines={1}>{song.artist} • {Math.floor(song.duration / 60)}:{String(song.duration % 60).padStart(2, '0')}</Text>
@@ -28,10 +34,12 @@ const SongItemDisplay: React.FC<SongItemDisplayProps> = ({ song, onPlay, onRemov
       </TouchableOpacity>
     </View>
   </View>
-);
+));
+
+const SONG_ITEM_HEIGHT = 96; // Estimated: Card padding (12*2) + Thumbnail (60) + marginBottom (12)
 
 interface PlaylistViewScreenProps {
-  route: { params: { playlistId: string } }; // playlistName is derived from store
+  route: { params: { playlistId: string } };
   navigation: any;
 }
 
@@ -134,7 +142,7 @@ const PlaylistViewScreen: React.FC<PlaylistViewScreenProps> = ({ route, navigati
         <FlatList
           data={songsForPlaylist}
           renderItem={({ item }) => (
-            <SongItemDisplay
+            <MemoizedSongItemDisplay // Use memoized component
               song={item}
               onPlay={() => handlePlaySong(item.id)}
               onRemove={() => handleRemoveSong(item.id)}
@@ -142,6 +150,12 @@ const PlaylistViewScreen: React.FC<PlaylistViewScreenProps> = ({ route, navigati
           )}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContentContainer}
+          initialNumToRender={10}
+          maxToRenderPerBatch={5}
+          windowSize={11}
+          getItemLayout={(data, index) => (
+            { length: SONG_ITEM_HEIGHT, offset: SONG_ITEM_HEIGHT * index, index }
+          )}
         />
       )}
       <View style={styles.footerButtons}>

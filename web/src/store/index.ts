@@ -3,7 +3,8 @@ import songsReducer from './songsSlice';
 import playlistsReducer from './playlistsSlice';
 import searchFiltersReducer from './searchFiltersSlice';
 import searchReducer from './searchSlice';
-import downloadsReducer from './downloadsSlice'; // Import the new downloads slice reducer
+import downloadsReducer from './downloadsSlice';
+import { apiSlice } from './apiSlice'; // Import the apiSlice for web
 import persistenceMiddleware from './persistenceMiddleware';
 
 export const store = configureStore({
@@ -11,11 +12,15 @@ export const store = configureStore({
     songs: songsReducer,
     playlists: playlistsReducer,
     searchFilters: searchFiltersReducer,
-    search: searchReducer,
-    downloads: downloadsReducer, // Add downloads slice reducer
+    search: searchReducer, // May be partially replaced
+    downloads: downloadsReducer,
+    [apiSlice.reducerPath]: apiSlice.reducer, // Add apiSlice reducer
     // other reducers can be added here
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(persistenceMiddleware),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware()
+      .concat(persistenceMiddleware)
+      .concat(apiSlice.middleware), // Add apiSlice middleware
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself

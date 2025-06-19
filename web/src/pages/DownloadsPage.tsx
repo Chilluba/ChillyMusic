@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { FixedSizeList as List } from 'react-window';
 import { RootState, AppDispatch } from '../store';
+import PlaceholderImage from '../components/ui/PlaceholderImage'; // Import PlaceholderImage
 import {
   DownloadedMediaItem,
   selectSortedDownloads,
@@ -24,44 +26,70 @@ const formatBytes = (bytes: number, decimals = 2): string => {
 };
 
 interface DownloadedItemCardProps {
-  item: DownloadedMediaItem;
-  onPlay: (item: DownloadedMediaItem) => void;
-  onDelete: (id: string, title: string) => void;
+  // Props for react-window
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    items: DownloadedMediaItem[];
+    onPlay: (item: DownloadedMediaItem) => void;
+    onDelete: (id: string, title: string) => void; // Assuming filePath is part of item for web too
+  };
 }
 
-const DownloadedItemCard: React.FC<DownloadedItemCardProps> = ({ item, onPlay, onDelete }) => (
-  <div className="bg-background-secondary p-4 rounded-lg shadow border border-border flex items-center space-x-4">
-    {item.thumbnail ? (
-      <img src={item.thumbnail} alt={item.title} className="w-20 h-20 rounded object-cover flex-shrink-0" />
-    ) : (
-      <div className="w-20 h-20 rounded bg-background-tertiary flex-shrink-0"></div>
-    )}
-    <div className="flex-grow overflow-hidden">
-      <h3 className="text-lg font-semibold text-text-primary truncate" title={item.title}>{item.title}</h3>
-      <p className="text-sm text-text-secondary truncate" title={item.artist}>{item.artist}</p>
-      <p className="text-xs text-text-muted truncate">
-        {formatBytes(item.format.filesize)} • Downloaded: {new Date(item.downloadedAt).toLocaleDateString()}
-        {item.duration ? ` • ${Math.floor(item.duration / 60)}:${String(item.duration % 60).padStart(2, '0')}` : ''}
-      </p>
+const DownloadedItemCard: React.FC<DownloadedItemCardProps> = ({ index, style, data }) => {
+  const item = data.items[index];
+  const { onPlay, onDelete } = data;
+
+  return (
+    <div style={style} className="py-2">
+      <div className="bg-background-secondary p-4 rounded-lg shadow border border-border flex items-center space-x-4 h-full">
+        <PlaceholderImage
+          src={item.thumbnail}
+          alt={item.title}
+          className="w-20 h-20 rounded object-cover flex-shrink-0" // Tailwind classes for size and appearance
+          // placeholderClassName="bg-background-tertiary" // Default is already this
+        />
+        <div className="flex-grow overflow-hidden">
+          <h3 className="text-lg font-semibold text-text-primary truncate" title={item.title}>{item.title}</h3>
+          <p className="text-sm text-text-secondary truncate" title={item.artist}>{item.artist}</p>
+          <p className="text-xs text-text-muted truncate">
+            {formatBytes(item.format.filesize)} • Downloaded: {new Date(item.downloadedAt).toLocaleDateString()}
+            {item.duration ? ` • ${Math.floor(item.duration / 60)}:${String(item.duration % 60).padStart(2, '0')}` : ''}
+          </p>
+        </div>
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 flex-shrink-0">
+          <button
+            onClick={() => onPlay(item)}
+            className="px-3 py-1.5 text-sm bg-accent-primary text-white rounded hover:bg-opacity-90 transition-colors min-w-[70px]"
+            title="Play"
+          >
+            ▶️ Play
+          </button>
+          <button
+            onClick={() => onDelete(item.id, item.title)} // Assuming item.filePath is used by web's onDelete
+            className="px-3 py-1.5 text-sm bg-error text-white rounded hover:bg-opacity-80 transition-colors min-w-[70px]"
+            title="Delete"
+          >
+            🗑️ Delete
+          </button>
+        </div>
+      </div>
     </div>
-    <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 flex-shrink-0">
-      <button
-        onClick={() => onPlay(item)}
-        className="px-3 py-1.5 text-sm bg-accent-primary text-white rounded hover:bg-opacity-90 transition-colors min-w-[70px]"
-        title="Play"
-      >
-        ▶️ Play
-      </button>
-      <button
-        onClick={() => onDelete(item.id, item.title)}
-        className="px-3 py-1.5 text-sm bg-error text-white rounded hover:bg-opacity-80 transition-colors min-w-[70px]"
-        title="Delete"
-      >
-        🗑️ Delete
-      </button>
-    </div>
-  </div>
-);
+  );
+};
+
+const DOWNLOADED_ITEM_HEIGHT = 112 + 8; // Card height (112) + py-2 (8px top/bottom from style prop) approx 120. Let's stick to 112 for itemSize if py-2 is for outer spacing.
+// Let's assume card itself is 112, and any margin/padding between items is handled by the `style` prop's positioning or className on the outer div.
+// For FixedSizeList, itemSize should be the full height allocated per item including spacing.
+// If the card is p-4 (16px top/bottom), img h-20 (80px) -> 16+80+16 = 112.
+// The `py-2` in the style prop means `style` will position items with 4px gap. So, `itemSize` can be 112.
+// Let's adjust the component to not have outer margin, and let the style prop handle it.
+// Or, make itemSize = 112 (card) + 8 (for py-2 on the style div) = 120.
+// Simpler: remove py-2 from style div, add mb-2 to card if needed, itemSize=112.
+// Let's make the card take full height of what `style` provides and add internal padding.
+// So if style is `height: 120px`, card is `h-full`.
+// For now, let's assume `itemSize` is the card intrinsic height (112px) + vertical spacing (e.g. 8px). So, 120px.
+const DOWNLOAD_ITEM_ROW_HEIGHT = 112 + 8; // 112 for card, 8 for spacing like space-y-2 or mb-2
 
 const sortKeyOptions: Array<{ label: string; value: SortKeyDownloads }> = [
     { label: 'Date', value: 'downloadedAt' },
@@ -106,7 +134,7 @@ const DownloadsPage: React.FC = () => {
   const currentSortOptionLabel = sortKeyOptions.find(opt => opt.value === currentSortBy)?.label || 'Date';
 
   return (
-    <div className="container mx-auto p-4 md:p-6 min-h-screen text-text-primary">
+    <div className="container mx-auto p-4 md:p-6 min-h-screen text-text-primary flex flex-col"> {/* Added flex flex-col */}
       <h1 className="text-3xl font-bold mb-6">My Downloads</h1>
 
       <div className="mb-6 p-4 bg-background-secondary rounded-lg shadow border border-border">
@@ -153,10 +181,16 @@ const DownloadsPage: React.FC = () => {
           <p className="mt-2 text-text-muted">Start downloading to see your media here!</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {sortedDownloads.map((item) => (
-            <DownloadedItemCard key={item.id} item={item} onPlay={handlePlayItem} onDelete={handleDeleteItem} />
-          ))}
+        <div className="flex-grow mt-4" style={{ minHeight: 300 /* Example min height */ }}>
+          <List
+            height={600} // Placeholder: This should be dynamic
+            itemCount={sortedDownloads.length}
+            itemSize={DOWNLOAD_ITEM_ROW_HEIGHT}
+            width="100%"
+            itemData={{ items: sortedDownloads, onPlay: handlePlayItem, onDelete: handleDeleteItem }}
+          >
+            {DownloadedItemCard}
+          </List>
         </div>
       )}
     </div>

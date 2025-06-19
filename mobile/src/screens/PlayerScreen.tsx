@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native'; // Removed Image
 import { useDispatch, useSelector } from 'react-redux';
 import Video, { OnLoadData, OnProgressData, VideoRef } from 'react-native-video';
+import PlaceholderImage from '../components/ui/PlaceholderImage'; // Import PlaceholderImage
 import { AppDispatch, RootState } from '../store';
 import {
     PlayerTrackInfo,
@@ -125,7 +126,11 @@ const PlayerScreen: React.FC<PlayerScreenProps> = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.screenTitle}>Now Playing</Text>
-      {trackInfo.thumbnail && <Image source={{uri: trackInfo.thumbnail}} style={styles.thumbnail} />}
+      <PlaceholderImage
+        sourceURI={trackInfo.thumbnail}
+        style={styles.thumbnail}
+        // placeholderStyle={{ backgroundColor: '#30363D' }} // Optional
+      />
       <Text style={styles.trackTitle} numberOfLines={1}>{trackInfo.title || 'Unknown Title'}</Text>
       <Text style={styles.artistName} numberOfLines={1}>{trackInfo.artist || 'Unknown Artist'}</Text>
       {trackInfo.isLocalFile && <Text style={styles.localFileText}>(Playing from Downloads)</Text>}

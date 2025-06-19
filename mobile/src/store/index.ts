@@ -4,7 +4,8 @@ import playlistsReducer from './playlistsSlice';
 import searchFiltersReducer from './searchFiltersSlice';
 import searchReducer from './searchSlice';
 import downloadsReducer from './downloadsSlice';
-import playerReducer from './playerSlice'; // Import the new player slice reducer
+import playerReducer from './playerSlice';
+import { apiSlice } from './apiSlice'; // Import the apiSlice
 import persistenceMiddleware from './persistenceMiddleware';
 
 export const store = configureStore({
@@ -12,12 +13,18 @@ export const store = configureStore({
     songs: songsReducer,
     playlists: playlistsReducer,
     searchFilters: searchFiltersReducer,
-    search: searchReducer,
+    search: searchReducer, // This might be partially or fully replaced by apiSlice for results
     downloads: downloadsReducer,
-    player: playerReducer, // Add player slice reducer
+    player: playerReducer,
+    [apiSlice.reducerPath]: apiSlice.reducer, // Add the apiSlice reducer
     // other reducers can be added here
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(persistenceMiddleware),
+  // Adding the api middleware enables caching, invalidation, polling,
+  // and other useful features of `rtk-query`.
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware()
+      .concat(persistenceMiddleware)
+      .concat(apiSlice.middleware), // Add the apiSlice middleware
   // Additional enhancers can be configured here
 });
 

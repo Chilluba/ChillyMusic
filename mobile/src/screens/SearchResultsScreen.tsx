@@ -2,100 +2,112 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, FlatList, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import SearchFilterBar from '../components/search/SearchFilterBar';
+import PlaceholderImage from '../components/ui/PlaceholderImage'; // Import PlaceholderImage
 import { selectSearchFilters, SearchFiltersState, initialState as initialFilterState } from '../store/searchFiltersSlice';
 import { RootState, AppDispatch } from '../store';
 import {
-  fetchSearchResults,
+  // fetchSearchResults, // To be removed
   selectCurrentSearchQuery,
-  selectSearchResults,
-  selectSearchLoading,
-  selectSearchError,
-  SearchResult, // Assuming SearchResult is Song from songsSlice for now
-} from '../store/searchSlice';
+  // selectSearchResults, // To be removed
+  // selectSearchLoading, // To be removed
+  // selectSearchError, // To be removed
+  SearchResult,
+} from '../store/searchSlice'; // Keep SearchResult and selectCurrentSearchQuery for now
+import { useGetSearchResultsQuery } from '../store/apiSlice'; // Import RTK Query hook
 
-// Placeholder for SearchResultItem component if it were defined
 // Using SearchResult (Song) type for item
-const SearchResultItem = ({ item }: { item: SearchResult }) => (
+// Memoize the item component
+const MemoizedSearchResultItem = React.memo(({ item }: { item: SearchResult }) => (
   <View style={styles.itemContainer}>
-    <View style={styles.thumbnailPlaceholder} /> {/* Replace with Image if thumbnail available */}
+    <PlaceholderImage
+      sourceURI={item.thumbnail}
+      style={styles.thumbnailPlaceholder} // Use existing style for dimensions
+      // placeholderStyle={{ backgroundColor: '#30363D' }} // Optional
+    />
     <View style={styles.infoContainer}>
       <Text style={styles.itemTitle} numberOfLines={1}>{item.title}</Text>
       <Text style={styles.itemArtist} numberOfLines={1}>{item.artist}</Text>
       {/* Add duration or other relevant info if needed */}
     </View>
   </View>
-);
+));
+
+const SEARCH_RESULT_ITEM_HEIGHT = 112; // Estimated: padding (16*2) + thumbnail (80)
 
 const SearchResultsScreen: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch<AppDispatch>(); // Keep dispatch if other actions are needed
   const filters = useSelector((state: RootState) => selectSearchFilters(state));
   const currentSearchQuery = useSelector((state: RootState) => selectCurrentSearchQuery(state));
-  const searchResults = useSelector((state: RootState) => selectSearchResults(state));
-  const isLoading = useSelector((state: RootState) => selectSearchLoading(state));
-  const searchError = useSelector((state: RootState) => selectSearchError(state));
+  const isInitialQueryEmpty = useRef(!currentSearchQuery); // Track if query was empty on mount
 
-  const isInitialMount = useRef(true);
+  // RTK Query hook
+  const {
+    data: searchApiData, // Renamed to avoid conflict with searchResults variable if any
+    isLoading,
+    isFetching,
+    error: searchError, // Renamed to avoid conflict
+    // refetch // Can be used for pull-to-refresh
+  } = useGetSearchResultsQuery(
+    { query: currentSearchQuery || '', filters },
+    { skip: !currentSearchQuery } // Skip query if no currentSearchQuery
+  );
 
-  useEffect(() => {
-    if (isInitialMount.current) {
-      let isDefault = true;
-      for (const key in initialFilterState) {
-        if (filters[key as keyof SearchFiltersState] !== initialFilterState[key as keyof SearchFiltersState]) {
-          isDefault = false;
-          break;
-        }
-      }
-      if (isDefault && !currentSearchQuery) { // If no query and default filters, don't do anything
-        isInitialMount.current = false;
-        return;
-      }
-      // If there IS a query on mount (e.g. from deep link), or filters are not default, allow search.
-      isInitialMount.current = false;
-    }
+  const searchResults = searchApiData?.results || [];
+  const totalResults = searchApiData?.total || 0;
 
-    if (currentSearchQuery) {
-      console.log('(Mobile) Filters or query changed, dispatching fetchSearchResults:', { query: currentSearchQuery, filters });
-      dispatch(fetchSearchResults({ query: currentSearchQuery }));
-    }
-    // The dependency array includes currentSearchQuery now.
-    // If currentSearchQuery is cleared (e.g. user clears search input), this effect might run.
-    // The searchSlice or component logic should handle whether to clear results or keep them.
-  }, [filters, currentSearchQuery, dispatch]);
-
+  // This useEffect is no longer needed for dispatching fetch, RTK Query handles it.
+  // It could be used for other side effects if needed when query/filters change.
+  // useEffect(() => {
+  //   console.log('(Mobile) Query or Filters changed:', { currentSearchQuery, filters });
+  //   // If using useLazyGetSearchResultsQuery, trigger it here.
+  //   // With useGetSearchResultsQuery, it re-fetches automatically.
+  // }, [filters, currentSearchQuery]);
 
   const handleAnyFilterChangedInBar = () => {
-    // The useEffect above will pick up the Redux state change.
+    // RTK Query will automatically refetch if 'filters' is a dependency of its parameters.
     console.log('(Mobile) A filter was selected/changed in SearchFilterBar.');
+    // If currentSearchQuery was empty and now a filter is changed, it might be a UX decision
+    // whether to trigger a search or wait for a query. Current setup skips query if no query string.
+    // If we want to search on filter change even with empty query, adjust skipCondition.
+    if (isInitialQueryEmpty.current && !currentSearchQuery) {
+        // If query was initially empty, and still is, maybe don't auto-search on filter change alone.
+        // This depends on desired UX. For now, RTK Query handles based on `skip`.
+    }
   };
 
-  // Placeholder for navigation props, e.g. to set header title
-  // const navigation = useNavigation();
-  // React.useLayoutEffect(() => {
-  //   if (currentSearchQuery) {
-  //     navigation.setOptions({ title: `Results for "${currentSearchQuery}"` });
-  //   } else {
-  //     navigation.setOptions({ title: 'Search' });
-  //   }
-  // }, [navigation, currentSearchQuery]);
-
   let content;
-  if (isLoading) {
+  const actualIsLoading = isLoading || isFetching; // Consider both for loading state
+
+  if (actualIsLoading) {
     content = <ActivityIndicator size="large" color="#F0F6FC" style={styles.centeredMessage} />;
   } else if (searchError) {
-    content = <Text style={styles.centeredMessage}>Error: {searchError}</Text>;
-  } else if (searchResults.length === 0 && currentSearchQuery) {
+    // Type assertion for error if needed, e.g. if (searchError as any).status
+    content = <Text style={styles.centeredMessage}>Error: {(searchError as any)?.data?.error || (searchError as any)?.error || 'Failed to load results'}</Text>;
+  } else if (currentSearchQuery && searchResults.length === 0) {
     content = <Text style={styles.centeredMessage}>No results found for "{currentSearchQuery}".</Text>;
-  } else if (searchResults.length === 0 && !currentSearchQuery) {
+  } else if (!currentSearchQuery && searchResults.length === 0) {
     content = <Text style={styles.centeredMessage}>Search for something to see results.</Text>;
-  } else {
+  } else if (searchResults.length > 0) {
     content = (
       <FlatList
         data={searchResults}
-        renderItem={({ item }) => <SearchResultItem item={item} />}
-        keyExtractor={item => item.id}
+        renderItem={({ item }) => <MemoizedSearchResultItem item={item} />}
+        keyExtractor={(item) => item.id} // Ensure item.id is unique and stable
         style={styles.list}
+        initialNumToRender={8}
+        maxToRenderPerBatch={4}
+        windowSize={11}
+        getItemLayout={(data, index) => (
+          { length: SEARCH_RESULT_ITEM_HEIGHT, offset: SEARCH_RESULT_ITEM_HEIGHT * index, index }
+        )}
+        // ListEmptyComponent is not strictly needed here if parent conditions handle empty states,
+        // but good for safety if searchResults could be empty despite currentSearchQuery having a value.
+        // For now, the outer conditions handle the primary empty/error states.
       />
     );
+  } else {
+    // Fallback, though above conditions should cover all scenarios
+    content = <Text style={styles.centeredMessage}>Enter a search query to begin.</Text>;
   }
 
   return (
@@ -177,11 +189,13 @@ const styles = StyleSheet.create({
     fontSize: 14, // Body
     color: '#8B949E', // Text Secondary (Dark)
   },
-  emptyListText: {
+  centeredMessage: { // Updated style for centered messages
+    flex: 1,
     textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16, // Body Large
+    textAlignVertical: 'center', // For Android vertical centering
     color: '#8B949E', // Text Secondary (Dark)
+    fontSize: 16,     // Body Large
+    padding: 20,      // Add some padding
   }
 });
 
